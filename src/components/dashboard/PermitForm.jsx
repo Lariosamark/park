@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { createPermit } from "../../lib/permit";
+import { createNotification } from "../../lib/notification";
 
 export default function PermitForm({ user }) {
   const [formData, setFormData] = useState({
@@ -36,9 +38,17 @@ export default function PermitForm({ user }) {
     setRequirements((prev) => ({ ...prev, [name]: files[0] }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic here
+    try {
+      await createPermit(user.id, formData, requirements);
+      await createNotification(
+        user.id,
+        import.meta.env.VITE_ADMIN_ID,
+        `${user.firstName} submitted a permit request.`,
+        { nothing: "WOW" }
+      );
+    } catch (error) {}
     console.log("Form Data:", formData);
     console.log("Requirements:", requirements);
   };

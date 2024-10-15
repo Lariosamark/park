@@ -22,7 +22,7 @@ export default function LoginPage() {
   return (
     <main className="h-screen w-full flex">
       <section className="flex-1 flex items-center justify-center">
-        Logo
+        <img src="/logo.png" alt="logo" />
       </section>
       <section className="bg-red-950 w-[500px] flex items-center flex-col justify-center">
         <h1 className="text-2xl font-bold text-white">Login</h1>

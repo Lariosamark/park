@@ -5,17 +5,16 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCzyih1OTklkfZc_KJtQ7DMzCJNf5gOAEg",
-  authDomain: "capstone2-ec309.firebaseapp.com",
-  projectId: "capstone2-ec309",
-  storageBucket: "capstone2-ec309.appspot.com",
-  messagingSenderId: "315258965853",
-  appId: "1:315258965853:web:1512dab84b1bbbe1d8a2b4",
-  measurementId: "G-VXRZ2LPH51",
+  apiKey: "AIzaSyBJGLTF7g98LAVJ0KQSufSyi-z-aFMF83E",
+  authDomain: "park-9e055.firebaseapp.com",
+  projectId: "park-9e055",
+  storageBucket: "park-9e055.appspot.com",
+  messagingSenderId: "874532312543",
+  appId: "1:874532312543:web:1516fbae96c5cade1e206a",
 };
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app)
+export const storage = getStorage(app);

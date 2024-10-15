@@ -6,6 +6,8 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import MyPermit from "./pages/dashboard/MyPermit";
+import Permits from "./pages/dashboard/Permits";
+import PermitPage from "./pages/dashboard/PermitPage";
 
 export default function App() {
   return (
@@ -19,6 +21,8 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="mypermit" element={<MyPermit />} />
+          <Route path="permits" element={<Permits />} />
+          <Route path="permits/:permitId" element={<PermitPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
