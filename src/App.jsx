@@ -8,7 +8,14 @@ import DashboardLayout from "./components/dashboard/DashboardLayout";
 import MyPermit from "./pages/dashboard/MyPermit";
 import Permits from "./pages/dashboard/Permits";
 import PermitPage from "./pages/dashboard/PermitPage";
-
+import ProfilePage from "./pages/dashboard/ProfilePage";
+import ParkingPage from "./pages/dashboard/ParkingPage";
+import ManageUser from "./pages/dashboard/ManageUser";
+import ViewLogs from "./pages/dashboard/ViewLogs";
+import ViolationPage from "./pages/dashboard/ViolationPage";
+import ReportViolationPage from "./pages/dashboard/ReportViolationPage";
+import AnalyticsPage from "./pages/dashboard/AnalyticsPage";
+import RenewalPage from "./pages/dashboard/RenewalPage";
 export default function App() {
   return (
     <BrowserRouter>
@@ -22,9 +29,18 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="mypermit" element={<MyPermit />} />
           <Route path="permits" element={<Permits />} />
+          <Route path="Profile" element={<ProfilePage />} />
           <Route path="permits/:permitId" element={<PermitPage />} />
+          <Route path="Parking" element={<ParkingPage />} />
+          <Route path="ManageUSer" element={<ManageUser />} />
+          <Route path="ViewLogs" element={<ViewLogs />} />
+          <Route path="ViolationPage" element={<ViolationPage />} />
+          <Route path="ReportViolationPage" element={<ReportViolationPage />} />
+          <Route path="AnalyticsPage" element={<AnalyticsPage />} />
+          <Route path="RenewalPage" element={<RenewalPage />} />
         </Route>
       </Routes>
+      
     </BrowserRouter>
   );
 }

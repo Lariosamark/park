@@ -39,6 +39,7 @@ export default function HomePage() {
           >
             Learn More
           </a>
+          
         </section>
 
         <section id="features" className="bg-white p-6 rounded shadow-md mb-5">

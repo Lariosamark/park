@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getPermit, getPermitByStatus } from "../../lib/permit";
+import { getPermit, getAllPermits } from "../../lib/permit";
 
 export const usePermit = (userId) => {
   const [loading, setLoading] = useState(false);
@@ -28,14 +28,14 @@ export const usePermit = (userId) => {
   };
 };
 
-export const usePermits = (status) => {
+export const usePermits = () => {
   const [loading, setLoading] = useState(false);
   const [permits, setPermits] = useState([]);
 
   const fetchPermits = async () => {
     try {
       setLoading(true);
-      const permits = await getPermitByStatus(status);
+      const permits = await getAllPermits();
       setPermits(permits);
     } catch (error) {
       console.log(error);

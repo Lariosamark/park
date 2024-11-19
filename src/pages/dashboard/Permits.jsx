@@ -5,7 +5,7 @@ export default function Permits() {
   const { permits } = usePermits("Pending");
   return (
     <div>
-      <h1 className="text-xl mb-2">Pending Permits</h1>
+      <h1 className="text-xl mb-2">Permits</h1>
       <PermitsTable permits={permits} />
     </div>
   );

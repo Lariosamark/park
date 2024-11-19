@@ -1,24 +1,33 @@
-import { Car, File, PieChartIcon, QrCode, User } from "lucide-react";
+import { Car, File, PieChartIcon, QrCode, User, Kanban, Logs, OctagonAlert, ChartLine, TriangleAlert,FilePlus2 } from "lucide-react";
 
 export const userLinks = [
   { tag: "Dashboard", href: "/dashboard", icon: PieChartIcon },
-  { tag: "Profile", href: "/dashboard/profile", icon: User },
+  { tag: "Profile", href: "/dashboard/Profile", icon: User },
   { tag: "My Permit", href: "/dashboard/mypermit", icon: File },
   { tag: "Parking", href: "/dashboard/parking", icon: Car },
+  { tag: "Report", href: "/dashboard/ReportViolationPage", icon: TriangleAlert },
 ];
 
 export const adminLinks = [
   { tag: "Dashboard", href: "/dashboard", icon: PieChartIcon },
-  { tag: "Profile", href: "/dashboard/profile", icon: User },
+  { tag: "ManageUser", href: "/dashboard/ManageUser", icon: Kanban},
+  { tag: "Profile", href: "/dashboard/Profile", icon: User },
   { tag: "Permits", href: "/dashboard/permits", icon: File },
-  { tag: "Parkings", href: "/dashboard/parkings", icon: Car },
+  { tag: "Viewlogs", href: "/dashboard/ViewLogs", icon: Logs },
+  { tag: "Violations", href: "/dashboard/ViolationPage", icon: OctagonAlert },
+  { tag: "Analytics", href: "/dashboard/AnalyticsPage", icon: ChartLine },
+
+  
 ];
 
 export const securityLinks = [
   { tag: "Dashboard", href: "/dashboard", icon: PieChartIcon },
-  { tag: "Profile", href: "/profile", icon: User },
-  { tag: "Parkings", href: "/parkings", icon: Car },
+  { tag: "Profile", href: "/dashboard/Profile", icon: User },
+  { tag: "Parkings", href: "/dashboard/parking", icon: Car },
+  { tag: "Viewlogs", href: "/dashboard/ViewLogs", icon: Logs },
   { tag: "QR", href: "/scanner", icon: QrCode },
+  { tag: "Analytics", href: "/dashboard/AnalyticsPage", icon: ChartLine },
+
 ];
 
 export const formatTimestamp = (timestamp) => {

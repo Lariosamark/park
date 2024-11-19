@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPermit } from "../../lib/permit";
 import { createNotification } from "../../lib/notification";
+import { usePermit } from "../../pages/dashboard/usePermit";
+import { useNavigate } from "react-router-dom";
 
-export default function PermitForm({ user }) {
+export default function PermitRenewalForm({ user }) {
+  const { permit } = usePermit(user.id); // Fetch the existing permit data for defaults
   const [loading, setLoading] = useState(false);
+  const [renewalOption, setRenewalOption] = useState("same");
+  const navigate = useNavigate(); // Initialize useNavigate
+
   const [formData, setFormData] = useState({
     Fullname: "",
     designation: "",
@@ -25,10 +31,52 @@ export default function PermitForm({ user }) {
   const [requirements, setRequirements] = useState({
     driversLicense: null,
     corReceipt: null,
-    officialRegistration: null,
-    validID: null,
     paymentReceipt: null,
+    OfficialReceipt:null,
   });
+
+  // Load default values based on renewal option
+  useEffect(() => {
+    if (permit) {
+      const personalInfo = {
+        Fullname: permit.Fullname || "",
+        designation: permit.designation || "",
+        idNumber: permit.idNumber || "",
+        address: permit.address || "",
+        contactNo: permit.contactNo || "",
+      };
+
+      setFormData({
+        ...personalInfo,
+        plateNo: permit.plateNo || "",
+        vehicleColor: permit.vehicleColor || "",
+        registrationNo: permit.registrationNo || "",
+        dateIssuedReg: permit.dateIssuedReg || "",
+        currentORNo: permit.currentORNo || "",
+        dateIssuedOR: permit.dateIssuedOR || "",
+        driversLicenseNo: permit.driversLicenseNo || "",
+        dateIssuedLicense: permit.dateIssuedLicense || "",
+        expiryDateLicense: permit.expiryDateLicense || "",
+        vehicleType: permit.vehicleType || "",
+      });
+
+      if (renewalOption === "different") {
+        setFormData({
+          ...personalInfo,
+          plateNo: "",
+          vehicleColor: "",
+          registrationNo: "",
+          dateIssuedReg: "",
+          currentORNo: "",
+          dateIssuedOR: "",
+          driversLicenseNo: "",
+          dateIssuedLicense: "",
+          expiryDateLicense: "",
+          vehicleType: "",
+        });
+      }
+    }
+  }, [permit, renewalOption]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,14 +96,14 @@ export default function PermitForm({ user }) {
       await createNotification(
         user.id,
         import.meta.env.VITE_ADMIN_ID,
-        `${user.firstName} submitted a permit request.`,
+        `${user.firstName} submitted a permit renewal request.`,
         { link: `/dashboard/permits/${user.id}` }
       );
-      window.location.reload();
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+      navigate("/dashboard/mypermit");
     }
   };
 
@@ -65,9 +113,22 @@ export default function PermitForm({ user }) {
       className="space-y-8 bg-white p-6 rounded-lg shadow-lg max-w-3xl mx-auto mt-10"
     >
       <h1 className="text-3xl font-bold text-center mb-6">
-        Vehicle Permit Application
+        Vehicle Permit Renewal Application
       </h1>
 
+      <div className="mb-6">
+        <label className="block font-medium">Renewal Option:</label>
+        <select
+          value={renewalOption}
+          onChange={(e) => setRenewalOption(e.target.value)}
+          className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
+        >
+          <option value="same">Renew with the Same Vehicle</option>
+          <option value="different">Renew with a Different Vehicle</option>
+        </select>
+      </div>
+
+      {/* Personal Information Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium">Full Name:</label>
@@ -102,20 +163,6 @@ export default function PermitForm({ user }) {
             className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block font-medium">Contact No.:</label>
-          <input
-            type="text"
-            name="contactNo"
-            value={formData.contactNo}
-            onChange={handleChange}
-            placeholder="Enter your contact number"
-            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
-          />
-        </div>
         <div>
           <label className="block font-medium">Address:</label>
           <input
@@ -127,10 +174,21 @@ export default function PermitForm({ user }) {
             className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
           />
         </div>
+        <div>
+          <label className="block font-medium">Contact No.:</label>
+          <input
+            type="text"
+            name="contactNo"
+            value={formData.contactNo}
+            onChange={handleChange}
+            placeholder="Enter your contact number"
+            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
+          />
+        </div>
       </div>
 
+      {/* Vehicle Details Section */}
       <h2 className="text-xl font-semibold mb-4">Vehicle Details</h2>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium">Plate No.:</label>
@@ -204,6 +262,8 @@ export default function PermitForm({ user }) {
         </div>
       </div>
 
+      {/* Driver's License Details */}
+      <h2 className="text-xl font-semibold mt-4 mb-2">Driver's License Details</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium">Driver's License No.:</label>
@@ -226,9 +286,6 @@ export default function PermitForm({ user }) {
             className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium">Expiry Date (License):</label>
           <input
@@ -239,71 +296,24 @@ export default function PermitForm({ user }) {
             className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
           />
         </div>
-        <div>
-          <label className="block font-medium">Vehicle Type:</label>
-          <select
-            name="vehicleType"
-            value={formData.vehicleType}
-            onChange={handleChange}
-            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
-          >
-            <option value="" disabled>Select vehicle type</option>
-            <option value="4-wheels">4 Wheels</option>
-            <option value="2-wheels">2 Wheels</option>
-            <option value="both">Both</option>
-          </select>
-        </div>
       </div>
 
+      {/* Requirements File Uploads */}
       <h2 className="text-xl font-semibold mb-4">Requirements</h2>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block font-medium">Driver's License:</label>
-          <input
-            type="file"
-            name="driversLicense"
-            onChange={handleFileChange}
-            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
-          />
-        </div>
-        <div>
-          <label className="block font-medium">COR Receipt:</label>
-          <input
-            type="file"
-            name="corReceipt"
-            onChange={handleFileChange}
-            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
-          />
-        </div>
-        <div>
-          <label className="block font-medium">Official Registration:</label>
-          <input
-            type="file"
-            name="officialRegistration"
-            onChange={handleFileChange}
-            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
-          />
-        </div>
-        <div>
-          <label className="block font-medium">Valid ID:</label>
-          <input
-            type="file"
-            name="validID"
-            onChange={handleFileChange}
-            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
-          />
-        </div>
-        <div>
-          <label className="block font-medium">Payment Receipt:</label>
-          <input
-            type="file"
-            name="paymentReceipt"
-            onChange={handleFileChange}
-            className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
-            required
-          />
-        </div>
+        {Object.keys(requirements).map((key) => (
+          <div key={key}>
+            <label className="block font-medium">
+              {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}:
+            </label>
+            <input
+              type="file"
+              name={key}
+              onChange={handleFileChange}
+              className="border p-2 rounded w-full focus:outline-none focus:ring focus:border-blue-300"
+            />
+          </div>
+        ))}
       </div>
 
       <button
@@ -313,7 +323,7 @@ export default function PermitForm({ user }) {
         }`}
         disabled={loading}
       >
-        {loading ? "Submitting..." : "Submit Application"}
+        {loading ? "Submitting..." : "Submit Renewal Application"}
       </button>
     </form>
   );

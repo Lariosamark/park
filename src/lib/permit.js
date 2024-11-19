@@ -8,14 +8,15 @@ import {
   getDocs,
   limit,
   updateDoc,
+  setDoc,
+  getDoc, // Import getDoc to fetch a single document
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "./firebase"; // Ensure you import your Firebase configuration
 
-// Create a new permit request
 export const createPermit = async (userId, permitData, requirements) => {
   try {
-    // Step 1: Create a new permit request in Firestore (without file URLs initially)
+    // Step 1: Create the permit request data (without file URLs initially)
     const permitRequest = {
       ...permitData,
       userId,
@@ -25,18 +26,18 @@ export const createPermit = async (userId, permitData, requirements) => {
       createdAt: Timestamp.now(),
     };
 
-    // Create a new document in the "permits" collection
-    const docRef = await addDoc(collection(db, "permits"), permitRequest);
+    // Set a new document in the "permits" collection with the user's ID
+    const docRef = doc(db, "permits", userId); 
+    await setDoc(docRef, permitRequest);
 
     // Step 2: Upload the files to Firebase Storage and store their URLs
-    const fileUrls = await uploadPermitFiles(requirements, docRef.id);
+    const fileUrls = await uploadPermitFiles(requirements, userId);
 
     // Step 3: Update the document with file URLs
-    await updateDoc(docRef, {
-      fileUrls,
-    });
-
-    console.log("Permit request created successfully with ID:", docRef.id);
+    await setDoc(docRef, { ...permitRequest, fileUrls }, { merge: true });
+    
+    console.log("Permit request created successfully for user ID:", userId);
+    return userId;
   } catch (error) {
     console.error("Error creating permit request:", error);
     throw error; // Rethrow the error to handle it outside if needed
@@ -64,25 +65,44 @@ export const getPermit = async (userId) => {
   }
 };
 
-// Fetch permits based on the status
-export const getPermitByStatus = async (status) => {
+// Fetch a single permit by ID
+export const getPermitById = async (permitId) => {
+  try {
+    const permitRef = doc(db, "permits", permitId);
+    const permitSnap = await getDoc(permitRef);
+
+    if (!permitSnap.exists()) {
+      console.log("No such permit!");
+      return null; // Return null if no permit is found
+    }
+
+    return { id: permitSnap.id, ...permitSnap.data() }; // Return the permit object
+  } catch (error) {
+    console.error("Error fetching permit by ID:", error);
+    throw error; // Rethrow the error to handle it outside if needed
+  }
+};
+
+// Fetch all permits
+export const getAllPermits = async () => {
   try {
     const permitsRef = collection(db, "permits");
-    const q = query(permitsRef, where("status", "==", status));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(permitsRef); // No 'where' condition, fetching all permits
 
     if (querySnapshot.empty) {
-      console.log("No permits found with the specified status.");
+      console.log("No permits found.");
       return []; // Return an empty array if no permits are found
     }
+
     // Map over the documents and return an array of permit objects
     const permits = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
+
     return permits; // Return the list of permits
   } catch (error) {
-    console.error("Error fetching permits by status:", error);
+    console.error("Error fetching all permits:", error);
     throw error; // Rethrow the error to handle it outside if needed
   }
 };

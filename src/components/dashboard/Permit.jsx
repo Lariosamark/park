@@ -1,7 +1,17 @@
 import React from "react";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  Box,
+  CardMedia,
+  Paper,
+} from "@mui/material";
 
 const Permit = ({ permitData }) => {
   const {
+    Fullname,
     vehicleColor,
     expiryDateLicense,
     status,
@@ -25,88 +35,152 @@ const Permit = ({ permitData }) => {
   } = permitData;
 
   return (
-    <div className="permit-container border p-4 rounded-md shadow-md max-w-lg">
-      <h2 className="text-2xl font-bold mb-4">Permit Details</h2>
+    <Card sx={{ maxWidth: 800, margin: "auto", mt: 4 }}>
+      <CardContent>
+        <Typography variant="h5" component="div" gutterBottom>
+          Permit Details
+        </Typography>
 
-      {/* Display permit details */}
-      <div className="mb-2">
-        <strong>Vehicle Type:</strong> {vehicleType}
-      </div>
-      <div className="mb-2">
-        <strong>Vehicle Color:</strong> {vehicleColor}
-      </div>
-      <div className="mb-2">
-        <strong>License Expiry Date:</strong> {expiryDateLicense}
-      </div>
-      <div className="mb-2">
-        <strong>Status:</strong> {status}
-      </div>
-      <div className="mb-2">
-        <strong>Contact No:</strong> {contactNo}
-      </div>
-      <div className="mb-2">
-        <strong>Designation:</strong> {designation}
-      </div>
-      <div className="mb-2">
-        <strong>Date Issued OR:</strong> {dateIssuedOR}
-      </div>
-      <div className="mb-2">
-        <strong>Plate No:</strong> {plateNo}
-      </div>
+        {/* Display Permit Details */}
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Full Name:</strong> {Fullname}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Vehicle Type:</strong> {vehicleType}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Vehicle Color:</strong> {vehicleColor}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>License Expiry Date:</strong> {expiryDateLicense}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Status:</strong> {status}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Contact No:</strong> {contactNo}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Designation:</strong> {designation}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Date Issued OR:</strong> {dateIssuedOR}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <strong>Plate No:</strong> {plateNo}
+            </Typography>
+          </Grid>
+        </Grid>
 
-      {/* Display Images */}
-      <h3 className="text-xl font-semibold mt-4">Uploaded Documents</h3>
-      {fileUrls.driversLicense && (
-        <div className="mb-4">
-          <strong>Driver's License:</strong>
-          <img
-            src={fileUrls.driversLicense}
-            alt="Driver's License"
-            className="w-full max-w-xs mt-2"
-          />
-        </div>
-      )}
-      {fileUrls.paymentReceipt && (
-        <div className="mb-4">
-          <strong>Payment Receipt:</strong>
-          <img
-            src={fileUrls.paymentReceipt}
-            alt="Payment Receipt"
-            className="w-full max-w-xs mt-2"
-          />
-        </div>
-      )}
-      {fileUrls.officialRegistration && (
-        <div className="mb-4">
-          <strong>Official Registration:</strong>
-          <img
-            src={fileUrls.officialRegistration}
-            alt="Official Registration"
-            className="w-full max-w-xs mt-2"
-          />
-        </div>
-      )}
-      {fileUrls.validID && (
-        <div className="mb-4">
-          <strong>Valid ID:</strong>
-          <img
-            src={fileUrls.validID}
-            alt="Valid ID"
-            className="w-full max-w-xs mt-2"
-          />
-        </div>
-      )}
-      {fileUrls.corReceipt && (
-        <div className="mb-4">
-          <strong>Certificate of Registration (COR):</strong>
-          <img
-            src={fileUrls.corReceipt}
-            alt="COR Receipt"
-            className="w-full max-w-xs mt-2"
-          />
-        </div>
-      )}
-    </div>
+        {/* Uploaded Documents */}
+        <Box mt={4}>
+          <Typography variant="h6" gutterBottom>
+            Uploaded Documents
+          </Typography>
+
+          <Grid container spacing={2}>
+            {fileUrls?.driversLicense && (
+              <Grid item xs={12} sm={6}>
+                <Paper elevation={3} sx={{ padding: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Driver's License
+                  </Typography>
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={fileUrls.driversLicense}
+                    alt="Driver's License"
+                    sx={{ objectFit: "contain" }}
+                  />
+                </Paper>
+              </Grid>
+            )}
+            {fileUrls?.paymentReceipt && (
+              <Grid item xs={12} sm={6}>
+                <Paper elevation={3} sx={{ padding: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Payment Receipt
+                  </Typography>
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={fileUrls.paymentReceipt}
+                    alt="Payment Receipt"
+                    sx={{ objectFit: "contain" }}
+                  />
+                </Paper>
+              </Grid>
+            )}
+            {fileUrls?.officialRegistration && (
+              <Grid item xs={12} sm={6}>
+                <Paper elevation={3} sx={{ padding: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Official Registration
+                  </Typography>
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={fileUrls.officialRegistration}
+                    alt="Official Registration"
+                    sx={{ objectFit: "contain" }}
+                  />
+                </Paper>
+              </Grid>
+            )}
+            {fileUrls?.validID && (
+              <Grid item xs={12} sm={6}>
+                <Paper elevation={3} sx={{ padding: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Valid ID
+                  </Typography>
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={fileUrls.validID}
+                    alt="Valid ID"
+                    sx={{ objectFit: "contain" }}
+                  />
+                </Paper>
+              </Grid>
+            )}
+            {fileUrls?.corReceipt && (
+              <Grid item xs={12} sm={6}>
+                <Paper elevation={3} sx={{ padding: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Certificate of Registration (COR)
+                  </Typography>
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={fileUrls.corReceipt}
+                    alt="Certificate of Registration (COR)"
+                    sx={{ objectFit: "contain" }}
+                  />
+                </Paper>
+              </Grid>
+            )}
+          </Grid>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 
