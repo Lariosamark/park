@@ -1,20 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../../providers/AuthProvider";
 import { TextField, Button, Container, Typography, Grid, Box } from "@mui/material";
-import QRCode from "react-qr-code";
+import QRCode from "react-qr-code"; // QR code component for generating QR code
+import html2canvas from "html2canvas"; // Import html2canvas to capture SVG and convert to image
 
 export default function ProfilePage() {
-  const { user } = useUser();
-  const [editMode, setEditMode] = useState(false);
+  const { user } = useUser(); // Get user data from AuthProvider
+  const [editMode, setEditMode] = useState(false); // Toggle edit mode
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     email: user?.email || "",
     contactNumber: user?.contactNumber || "",
   });
-  const [generatedCode, setGeneratedCode] = useState("");
+  const [generatedCode, setGeneratedCode] = useState(""); // Store the generated code for QR
+  const qrCodeRef = useRef(null); // Reference for the QR code component
 
-  // Make sure user is available before rendering the rest of the component
+  // Update profileData when user object changes
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -26,28 +28,47 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // Handle changes in profile data input fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfileData((prevData) => ({ ...prevData, [name]: value }));
   };
 
+  // Save profile data after edit
   const handleSave = () => {
     console.log("Profile updated:", profileData);
     setEditMode(false);
   };
 
+  // Generate a code (in this case, the user's ID) for QR code
   const generateCode = () => {
-    const userId = user?.uid; // Use user?.uid safely
-    console.log("Generated User ID:", userId); // Debugging line
-    if (userId) {
-      setGeneratedCode(userId);
+    console.log("User object:", user); // Debugging: Log the entire user object to check its structure
+    if (user && user.id) {
+      const userId = user.id; // Use user.id instead of user.uid
+      console.log("Generated User ID:", userId); // Debugging: Log the actual user ID
+      setGeneratedCode(userId); // Set the generated code (user ID) for QR code
     } else {
       console.error("User ID is not available.");
     }
   };
 
+  // Function to download the QR code as an image
+  const downloadQRCode = () => {
+    if (qrCodeRef.current) {
+      // Use html2canvas to capture the QR code SVG and convert it to a canvas
+      html2canvas(qrCodeRef.current).then((canvas) => {
+        const imageUrl = canvas.toDataURL("image/png"); // Convert canvas to PNG image
+        const link = document.createElement("a");
+        link.href = imageUrl;
+        link.download = `${generatedCode}_qr.png`; // Set download file name
+        link.click(); // Trigger the download
+      });
+    }
+  };
+
+  // Check if user is available
   if (!user) {
-    return <p>Loading...</p>; // Return loading if user data is still being fetched
+    return <p>Loading user data...</p>;  // Display loading message while user data is being fetched
   }
 
   return (
@@ -113,7 +134,7 @@ export default function ProfilePage() {
 
       <div style={{ marginTop: "20px" }}>
         <Button variant="contained" onClick={generateCode}>
-          Generate Code
+          Generate QR Code
         </Button>
       </div>
 
@@ -122,7 +143,21 @@ export default function ProfilePage() {
         <Box style={{ marginTop: "20px", textAlign: "center" }}>
           <Typography variant="h6">Generated Code (User ID):</Typography>
           <Typography variant="body1">{generatedCode}</Typography>
-          <QRCode value={generatedCode} size={128} />
+
+          {/* Render QR code */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div ref={qrCodeRef}>
+              <QRCode value={generatedCode} size={128} />
+            </div>
+            <Button
+              variant="contained"
+              color="secondary"
+              style={{ marginTop: "10px" }}
+              onClick={downloadQRCode}
+            >
+              Download QR Code
+            </Button>
+          </div>
         </Box>
       )}
 

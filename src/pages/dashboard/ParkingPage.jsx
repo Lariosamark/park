@@ -1,35 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Grid, Typography } from "@mui/material";
 import { grey } from "@mui/material/colors";
 
 function ParkingLayout() {
-  const [clickedSpots, setClickedSpots] = useState({});
+  const [clickedSpot, setClickedSpot] = useState(null); // Track only one clicked spot
+
+    // Load the clicked spot from localStorage when the component mounts
+    useEffect(() => {
+      const savedSpot = localStorage.getItem("clickedSpot");
+      if (savedSpot) {
+        setClickedSpot(savedSpot);
+      }
+    }, []);
+    useEffect(() => {
+      if (clickedSpot !== null) {
+        localStorage.setItem("clickedSpot", clickedSpot);
+      }
+    }, [clickedSpot]);
 
   const handleSpotClick = (spotId) => {
-    setClickedSpots((prev) => ({
-      ...prev,
-      [spotId]: !prev[spotId],
-    }));
+    // Toggle the spot: if it's already clicked, unclick it; if not, set it as the clicked spot
+    setClickedSpot((prev) => (prev === spotId ? null : spotId));
   };
 
   const getSpotColor = (spotId) => {
     // available na motor
     if (spotId.startsWith("Motor")) {
-      return clickedSpots[spotId] ? "red" : "#64B5F6";
+      return spotId === clickedSpot ? "red" : "#64B5F6"; // Red if selected, blue if not
     }
 
-    // sa mga availble sakyanan
+    // sa mga available sakyanan
     if (spotId.startsWith("Car")) {
-      return clickedSpots[spotId] ? "red" : "#81C784";
+      return spotId === clickedSpot ? "red" : "#81C784"; // Red if selected, green if not
     }
 
     // mao ni and assign color na available sa visitors
     if (spotId.startsWith("V")) {
-      return clickedSpots[spotId] ? "red" : "#FFEB3B";
+      return spotId === clickedSpot ? "red" : "#FFEB3B"; // Red if selected, yellow if not
     }
 
-    // kung dili available ang spot
-    return clickedSpots[spotId] ? "red" : "#81D4FA";
+    // Default: spot color (non-clicked spots)
+    return spotId === clickedSpot ? "red" : "#81D4FA"; // Red if selected, blue if not
   };
 
   return (
@@ -56,8 +67,7 @@ function ParkingLayout() {
               justifyContent: "center",
               mb: 1,
             }}
-          >
-          </Box>
+          ></Box>
 
           <Box sx={{ position: "absolute", top: "6.8%", left: "9%" }}>
             <Box
@@ -69,13 +79,12 @@ function ParkingLayout() {
                 width: "230px",
                 bgcolor: "#e9e9e9",
               }}
-            >
+            ></Box>
+            <Box sx={{ position: "absolute", top: "45%", transform: "rotate(90deg)" }}>
+              <Typography sx={{ letterSpacing: "2px", fontSize: "20px" }}>
+                HALLWAY
+              </Typography>
             </Box>
-            <Box sx={{position: 'absolute', top: '45%', transform: 'rotate(90deg)'}}>
-              <Typography sx={{ letterSpacing: '2px', fontSize: '20px'}}>HALLWAY</Typography>
-            </Box>
-
-           
           </Box>
 
           {/* Left Column - Car Spots 8-20 */}
@@ -156,17 +165,15 @@ function ParkingLayout() {
 
           {/* Tree */}
           <Box
-            component= "img"
-            src= "https://cdn-icons-png.flaticon.com/512/2220/2220091.png"
+            component="img"
+            src="https://cdn-icons-png.flaticon.com/512/2220/2220091.png"
             sx={{
               mt: 7,
               p: 2,
               width: "100px",
               height: "100px",
             }}
-          >
-
-          </Box>
+          ></Box>
 
           {/* Center Column - Dalan, Quadrangle, Pick-Up, Visitor Spots, Stage */}
           <Box
@@ -262,7 +269,7 @@ function ParkingLayout() {
                   <Box
                     key={spot}
                     onClick={() => handleSpotClick(`Motor Spot ${spot}`)}
-                    sx={{
+                                        sx={{
                       fontSize: "5px",
                       bgcolor: getSpotColor(`Motor Spot ${spot}`),
                       p: 1,
@@ -298,15 +305,14 @@ function ParkingLayout() {
 
           {/* Tree and Car Spots 6-7 */}
           <Box
-            component= "img"
-            src = "https://cdn-icons-png.flaticon.com/512/2220/2220091.png"
+            component="img"
+            src="https://cdn-icons-png.flaticon.com/512/2220/2220091.png"
             sx={{
-              justifySelf: 'center',
-              height: '60px',
-              width: '70px'
+              justifySelf: "center",
+              height: "60px",
+              width: "70px",
             }}
-          >
-          </Box>
+          ></Box>
 
           {[6, 7].map((spot) => (
             <Box
@@ -324,25 +330,25 @@ function ParkingLayout() {
               Car Spot {spot}
             </Box>
           ))}
+
           <Box
-              sx={{
-                position: 'absolute',
-                top: '6.5%',
-                left: '40%',
-                borderLeft: "1px solid black",
-                borderBottom: "1px solid black",
-                borderRight: "1px solid black",
-                height: "550px",
-                width: "70px",
-                bgcolor: "#e9e9e9",
-              }}
+            sx={{
+              position: "absolute",
+              top: "6.5%",
+              left: "40%",
+              borderLeft: "1px solid black",
+              borderBottom: "1px solid black",
+              borderRight: "1px solid black",
+              height: "550px",
+              width: "70px",
+              bgcolor: "#e9e9e9",
+            }}
           ></Box>
-          
+
           {/* Motor far right pathway */}
           <Box sx={{ position: "absolute", top: "6.5%", left: "65%" }}>
             <Box
               sx={{
-                
                 borderBottom: "1px solid black",
                 borderRight: "1px solid black",
                 height: "550px",
@@ -352,12 +358,10 @@ function ParkingLayout() {
             ></Box>
             <Box
               sx={{
-                
                 borderTop: "1px solid black",
-                
-                position: 'absolute',
+                position: "absolute",
                 bottom: 0,
-                left: '69px',
+                left: "69px",
                 height: "70px",
                 width: "240px",
                 bgcolor: "#e9e9e9",
@@ -427,7 +431,9 @@ function ParkingLayout() {
 const itemData = [
   {
     img: "https://cdn-icons-png.flaticon.com/512/2220/2220091.png",
-    title: 'Tree',
-  }
+    title: "Tree",
+  },
 ];
+
 export default ParkingLayout;
+

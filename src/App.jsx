@@ -16,6 +16,7 @@ import ViolationPage from "./pages/dashboard/ViolationPage";
 import ReportViolationPage from "./pages/dashboard/ReportViolationPage";
 import AnalyticsPage from "./pages/dashboard/AnalyticsPage";
 import RenewalPage from "./pages/dashboard/RenewalPage";
+import Scanner from "./pages/dashboard/Scanner";
 export default function App() {
   return (
     <BrowserRouter>
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="ReportViolationPage" element={<ReportViolationPage />} />
           <Route path="AnalyticsPage" element={<AnalyticsPage />} />
           <Route path="RenewalPage" element={<RenewalPage />} />
+          <Route path="Scanner" element={<Scanner />} />
         </Route>
       </Routes>
       
