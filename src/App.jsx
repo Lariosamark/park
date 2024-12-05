@@ -17,12 +17,23 @@ import ReportViolationPage from "./pages/dashboard/ReportViolationPage";
 import AnalyticsPage from "./pages/dashboard/AnalyticsPage";
 import RenewalPage from "./pages/dashboard/RenewalPage";
 import Scanner from "./pages/dashboard/Scanner";
+import ForgotPasswordPage from "./pages/auth/ForgotPassword";
+
+import QRScanHandler from './lib/QRScanHandler';
+import { getAuth } from "firebase/auth";
+import VisitorPage from "./pages/dashboard/VisitorPage";
+
+
 export default function App() {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/ForgotPasswordPage" element={<ForgotPasswordPage />} />
         <Route path="/" element={<LandingLayout />}>
           <Route index element={<HomePage />} />
         </Route>
@@ -32,7 +43,8 @@ export default function App() {
           <Route path="permits" element={<Permits />} />
           <Route path="Profile" element={<ProfilePage />} />
           <Route path="permits/:permitId" element={<PermitPage />} />
-          <Route path="Parking" element={<ParkingPage />} />
+          <Route path="parking" element={<ParkingPage />} />
+          <Route path="parking/:userId" element={<ParkingPage />} />
           <Route path="ManageUSer" element={<ManageUser />} />
           <Route path="ViewLogs" element={<ViewLogs />} />
           <Route path="ViolationPage" element={<ViolationPage />} />
@@ -40,7 +52,12 @@ export default function App() {
           <Route path="AnalyticsPage" element={<AnalyticsPage />} />
           <Route path="RenewalPage" element={<RenewalPage />} />
           <Route path="Scanner" element={<Scanner />} />
+          <Route path="Visitors" element={<VisitorPage />} />
+          
+          
         </Route>
+
+        <Route path="/scan" element={<QRScanHandler />} />
       </Routes>
       
     </BrowserRouter>

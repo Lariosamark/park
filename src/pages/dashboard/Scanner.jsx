@@ -30,7 +30,6 @@ export default function QRScannerPage() {
   // Fetch user data based on user ID
   const fetchUserData = async (userId) => {
     try {
-      // Make an API request to fetch user data based on userId
       const response = await axios.get(`/api/user/${userId}`);
       setUserInfo(response.data);  // Save user data from API
     } catch (error) {

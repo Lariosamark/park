@@ -6,19 +6,19 @@ import { Link } from "react-router-dom";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      await login(email, password); // Login function from your auth lib
+      navigate("/dashboard"); // Redirect to dashboard after successful login
     } catch (error) {
       setError(error.message);
     }
   };
+
   return (
     <main className="h-screen w-full flex">
       <section className="flex-1 flex items-center justify-center">
@@ -34,7 +34,7 @@ export default function LoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="p-1 rounded-md mb-"
+            className="p-1 rounded-md mb-2"
             placeholder="Email"
           />
           <label htmlFor="password" className="text-white/70 text-sm">
@@ -54,7 +54,7 @@ export default function LoginPage() {
             Login
           </button>
           {error && <p className="text-red-700">{error}</p>}
-          <Link to="/forgot-password" className="text-white mt-4">
+          <Link to="/ForgotPasswordPage" className="text-white mt-4">
             Forgot Password?
           </Link>
           <p className="text-white">

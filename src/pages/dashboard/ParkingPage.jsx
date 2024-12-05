@@ -1,51 +1,168 @@
 import React, { useState, useEffect } from "react";
 import { Box, Grid, Typography } from "@mui/material";
 import { grey } from "@mui/material/colors";
+import { db } from "../../lib/firebase";
+import {
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+} from "firebase/firestore";
+import { useUser } from "../../context/UserContext";
+
+import { getAuth } from "firebase/auth";
+import { useParams } from "react-router-dom";
 
 function ParkingLayout() {
-  const [clickedSpot, setClickedSpot] = useState(null); // Track only one clicked spot
+  const { userId } = useParams(); // Get userId from URL params
 
-    // Load the clicked spot from localStorage when the component mounts
-    useEffect(() => {
-      const savedSpot = localStorage.getItem("clickedSpot");
-      if (savedSpot) {
-        setClickedSpot(savedSpot);
-      }
-    }, []);
-    useEffect(() => {
-      if (clickedSpot !== null) {
-        localStorage.setItem("clickedSpot", clickedSpot);
-      }
-    }, [clickedSpot]);
+  const [occupiedSpots, setOccupiedSpots] = useState(new Set());
+  const [hasActiveQR, setHasActiveQR] = useState(false);
 
-  const handleSpotClick = (spotId) => {
-    // Toggle the spot: if it's already clicked, unclick it; if not, set it as the clicked spot
-    setClickedSpot((prev) => (prev === spotId ? null : spotId));
+  const user = getAuth().currentUser;
+
+  // Check if the user is authenticated
+  useEffect(() => {
+    if (user) {
+      const fetchQRStatus = async () => {
+        try {
+          const userDoc = await getDoc(doc(db, "qrScans", user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setHasActiveQR(data.active);  // Assume 'active' is a boolean field in Firestore
+          } else {
+            console.warn("No QR scan data found for this user.");
+            setHasActiveQR(false);
+          }
+        } catch (error) {
+          console.error("Error fetching QR scan status:", error);
+        }
+      };
+
+      fetchQRStatus();
+    }
+  }, [user]);
+
+  // useEffect(() => {
+  //   const fetchOccupiedSpots = async () => {
+  //     try {
+  //       const response = await fetch("/api/getOccupiedSpots"); // Replace with your API endpoint
+  //       const data = await response.json();
+  //       setOccupiedSpots(new Set(data.map((spot) => spot.spotId)));
+  //     } catch (error) {
+  //       console.error("Error fetching occupied spots:", error);
+  //     }
+  //   };
+
+  //   fetchOccupiedSpots();
+  // }, []);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "parking"), (snapshot) => {
+      const occupied = new Set();
+      snapshot.forEach((doc) => {
+        if (doc.data().occupied) {
+          occupied.add(doc.id);
+        }
+      });
+      setOccupiedSpots(occupied);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSpotClick = async (spotId) => {
+    if (occupiedSpots.has(spotId)) {
+      alert("Error: Spot Occupied. Please choose a different spot.");
+      return;
+    }
+  
+    if (!hasActiveQR) {
+      alert("Access denied: You need an active QR scan to reserve a spot.");
+      return;
+    }
+  
+    // Fetch the plate number from the 'permit' collection using userId
+    if (user) {
+      try {
+        console.log(user.uid);
+        const permitDoc = await getDoc(doc(db, "permits", user.uid));  // 'permit' is your collection name
+
+        const parkingQuery = query(collection(db, "parking"), where("userId", "==", user.uid));
+        const querySnapshot = await getDocs(parkingQuery);
+  
+        if (!querySnapshot.empty) {
+          // User already has a reserved spot
+          alert("Access denied: You already have a reserved parking spot.");
+          return;
+        }
+
+        if (permitDoc.exists()) {
+          const permitData = permitDoc.data();
+          const plateNumber = permitData.plateNumber; // Assuming 'plateNumber' is the field you want
+
+          // Now update the 'parking' document with the spotId
+          await setDoc(doc(db, "parking", spotId), {
+            spotId: spotId,
+            userId: user.uid,
+            occupied: true,
+            timestamp: new Date(),
+          });
+  
+          // Update the 'qrScans' document with plate number and parking spot ID
+          await updateDocument(user.uid, plateNumber, spotId);
+  
+          setOccupiedSpots((prev) => new Set(prev).add(spotId));
+        } else {
+          console.warn("Permit document not found for the user.");
+          alert("Error: No permit found. Please ensure your permit is registered.");
+        }
+      } catch (error) {
+        console.error("Error fetching permit data or updating Firestore:", error);
+      }
+    }
+  };
+
+  
+
+  const updateDocument = async (userId, plateNumber, spotId) => {
+    try {
+      const userRef = doc(db, 'qrScans', userId);
+  
+      // If you want to add new fields (like plate number and parking spot ID) to an existing document
+      await updateDoc(userRef, {
+        plateNumber: plateNumber,  // Add the plate number field
+        spotId: spotId,  // Add the parking spot ID field
+        updatedAt: new Date(),  // Optional: Timestamp when the data was updated
+      });
+  
+      console.log('Document updated successfully!');
+    } catch (error) {
+      console.error('Error updating document:', error);
+    }
   };
 
   const getSpotColor = (spotId) => {
-    // available na motor
+    if (occupiedSpots.has(spotId)) {
+      return "red";
+    }
     if (spotId.startsWith("Motor")) {
-      return spotId === clickedSpot ? "red" : "#64B5F6"; // Red if selected, blue if not
+      return "#64B5F6";
+    } else if (spotId.startsWith("Car")) {
+      return "#81C784";
+    } else if (spotId.startsWith("V")) {
+      return "#FFEB3B";
     }
-
-    // sa mga available sakyanan
-    if (spotId.startsWith("Car")) {
-      return spotId === clickedSpot ? "red" : "#81C784"; // Red if selected, green if not
-    }
-
-    // mao ni and assign color na available sa visitors
-    if (spotId.startsWith("V")) {
-      return spotId === clickedSpot ? "red" : "#FFEB3B"; // Red if selected, yellow if not
-    }
-
-    // Default: spot color (non-clicked spots)
-    return spotId === clickedSpot ? "red" : "#81D4FA"; // Red if selected, blue if not
+    return "#81D4FA";
   };
 
   return (
     <Box sx={{ position: "relative", p: 2 }}>
-      {/* Main Gate */}
       <Typography variant="h4" align="center" sx={{ mb: 2 }}>
         Gate
       </Typography>
@@ -55,7 +172,6 @@ function ParkingLayout() {
         spacing={1}
         sx={{ display: "flex", justifyContent: "space-between" }}
       >
-        {/* Far Left Column - Hallway, Angled Car Spots 1-5, Tree */}
         <Grid item xs={3}>
           <Box
             sx={{
@@ -67,24 +183,16 @@ function ParkingLayout() {
               justifyContent: "center",
               mb: 1,
             }}
-          ></Box>
-
-          <Box sx={{ position: "absolute", top: "6.8%", left: "9%" }}>
-            <Box
+          >
+            <Typography
               sx={{
-                borderLeft: "2px solid black",
-                borderBottom: "2px solid black",
-                borderRight: "2px solid black",
-                height: "550px",
-                width: "230px",
-                bgcolor: "#e9e9e9",
+                letterSpacing: "2px",
+                fontSize: 40,
+                transform: "rotate(90deg)",
               }}
-            ></Box>
-            <Box sx={{ position: "absolute", top: "45%", transform: "rotate(90deg)" }}>
-              <Typography sx={{ letterSpacing: "2px", fontSize: "20px" }}>
-                HALLWAY
-              </Typography>
-            </Box>
+            >
+              HALLWAY
+            </Typography>
           </Box>
 
           {/* Left Column - Car Spots 8-20 */}
@@ -132,13 +240,70 @@ function ParkingLayout() {
               position: "absolute",
               transform: "rotate(90deg)",
               top: 250,
-              right: 200,
+              left: 100,
               height: 50,
               textAlign: "center",
               mb: 1,
             }}
           >
-            <Typography variant="h6">DALAN</Typography>
+            <Typography sx={{ fontSize: 30 }} variant="h6">
+              DALAN
+            </Typography>
+          </Box>
+
+          <Box>
+            <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
+              sx={{
+                height: "40px",
+                width: "150px",
+                position: "absolute",
+                left: "30%",
+                top: "10%",
+                opacity: ".8",
+                rotate: "90deg",
+              }}
+            ></Box>
+            <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
+              sx={{
+                height: "40px",
+                width: "150px",
+                position: "absolute",
+                left: "30%",
+                top: "30%",
+                opacity: ".8",
+                rotate: "90deg",
+              }}
+            ></Box>
+            <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
+              sx={{
+                height: "40px",
+                width: "150px",
+                position: "absolute",
+                left: "-60%",
+                top: "10%",
+                opacity: ".8",
+                rotate: "90deg",
+              }}
+            ></Box>
+            <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
+              sx={{
+                height: "40px",
+                width: "150px",
+                position: "absolute",
+                left: "-60%",
+                top: "30%",
+                opacity: ".8",
+                rotate: "90deg",
+              }}
+            ></Box>
           </Box>
 
           {/* Angled Car Spots 1-5 */}
@@ -269,7 +434,7 @@ function ParkingLayout() {
                   <Box
                     key={spot}
                     onClick={() => handleSpotClick(`Motor Spot ${spot}`)}
-                                        sx={{
+                    sx={{
                       fontSize: "5px",
                       bgcolor: getSpotColor(`Motor Spot ${spot}`),
                       p: 1,
@@ -333,47 +498,53 @@ function ParkingLayout() {
 
           <Box
             sx={{
-              position: "absolute",
-              top: "6.5%",
-              left: "40%",
-              borderLeft: "1px solid black",
-              borderBottom: "1px solid black",
-              borderRight: "1px solid black",
-              height: "550px",
-              width: "70px",
-              bgcolor: "#e9e9e9",
+              mt: "20px",
+              height: 50,
+              textAlign: "center",
+              mb: 1,
+              position: "relative",
             }}
-          ></Box>
-
-          {/* Motor far right pathway */}
-          <Box sx={{ position: "absolute", top: "6.5%", left: "65%" }}>
+          >
             <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
               sx={{
-                borderBottom: "1px solid black",
-                borderRight: "1px solid black",
-                height: "550px",
-                width: "70px",
-                bgcolor: "#e9e9e9",
+                height: "40px",
+                position: "absolute",
+                left: "-20px",
+                opacity: ".8",
               }}
             ></Box>
             <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
               sx={{
-                borderTop: "1px solid black",
+                height: "40px",
                 position: "absolute",
-                bottom: 0,
-                left: "69px",
-                height: "70px",
-                width: "240px",
-                bgcolor: "#e9e9e9",
+                left: -200,
+                opacity: ".8",
               }}
-            >
-              <Box sx={{ mt: "20px", height: 50, textAlign: "center", mb: 1 }}>
-                <Typography variant="h6">DALAN</Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          <Box sx={{ mt: "20px", height: 50, textAlign: "center", mb: 1 }}>
+            ></Box>
+            <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
+              sx={{
+                height: "40px",
+                position: "absolute",
+                left: -420,
+                opacity: ".8",
+              }}
+            ></Box>
+            <Box
+              component="img"
+              src="https://cdn.creazilla.com/cliparts/7830767/arrow-clipart-lg.png"
+              sx={{
+                height: "40px",
+                position: "absolute",
+                left: -600,
+                opacity: ".8",
+              }}
+            ></Box>
             <Typography variant="h6">DALAN</Typography>
           </Box>
 
@@ -436,4 +607,3 @@ const itemData = [
 ];
 
 export default ParkingLayout;
-

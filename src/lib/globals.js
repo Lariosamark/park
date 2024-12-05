@@ -1,4 +1,4 @@
-import { Car, File, PieChartIcon, QrCode, User, Kanban, Logs, OctagonAlert, ChartLine, TriangleAlert,FilePlus2, ScanLine } from "lucide-react";
+import { Car, File, PieChartIcon, QrCode, User, Kanban, Logs, OctagonAlert, ChartLine, TriangleAlert,FilePlus2, ScanLine, Users } from "lucide-react";
 
 export const userLinks = [
   { tag: "Dashboard", href: "/dashboard", icon: PieChartIcon },
@@ -27,6 +27,7 @@ export const securityLinks = [
   { tag: "Viewlogs", href: "/dashboard/ViewLogs", icon: Logs },
   { tag: "Scanner", href: "/dashboard/Scanner", icon: ScanLine },
   { tag: "Analytics", href: "/dashboard/AnalyticsPage", icon: ChartLine },
+  { tag: "Visitors", href: "/dashboard/Visitors", icon: Users},
 
 ];
 

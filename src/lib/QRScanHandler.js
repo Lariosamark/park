@@ -1,8 +1,7 @@
-
-import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { db } from './firebaseConfig';
-import { collection, addDoc } from 'firebase/firestore';
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { db } from "./firebase";
+import { doc, setDoc } from "firebase/firestore"; // Use setDoc instead of addDoc
 
 export default function QRScanHandler() {
   const [searchParams] = useSearchParams();
@@ -12,15 +11,22 @@ export default function QRScanHandler() {
       const userId = searchParams.get("userId");
       const firstName = searchParams.get("firstName");
       const lastName = searchParams.get("lastName");
+
+      const name = firstName + " " + lastName;
+
+      const email = searchParams.get("email"); // Fixed typo (was fetching "firstName" instead of "email")
       const contactNumber = searchParams.get("contactNumber");
+      const active = true;
 
       if (userId) {
         try {
-          await addDoc(collection(db, 'qrScans'), {
+          // Use setDoc and pass userId as document ID
+          await setDoc(doc(db, "qrScans", userId), {
             userId,
-            firstName,
-            lastName,
+            name,
+            email,
             contactNumber,
+            active,
             scannedAt: new Date(),
           });
           console.log("Scan data saved successfully!");
@@ -32,6 +38,4 @@ export default function QRScanHandler() {
 
     saveScanData();
   }, [searchParams]);
-
-  return <div>Processing QR Scan...</div>; 
 }

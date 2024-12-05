@@ -3,6 +3,10 @@ import { useUser } from "../../providers/AuthProvider";
 import { TextField, Button, Container, Typography, Grid, Box } from "@mui/material";
 import QRCode from "react-qr-code"; // QR code component for generating QR code
 import html2canvas from "html2canvas"; // Import html2canvas to capture SVG and convert to image
+import PermitForm from "../../components/dashboard/PermitForm";
+import { useNavigate } from "react-router-dom";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { db } from "../../lib/firebase";
 
 export default function ProfilePage() {
   const { user } = useUser(); // Get user data from AuthProvider
@@ -15,7 +19,7 @@ export default function ProfilePage() {
   });
   const [generatedCode, setGeneratedCode] = useState(""); // Store the generated code for QR
   const qrCodeRef = useRef(null); // Reference for the QR code component
-
+  const navigate = useNavigate();
   // Update profileData when user object changes
   useEffect(() => {
     if (user) {
@@ -40,19 +44,51 @@ export default function ProfilePage() {
     setEditMode(false);
   };
 
-  // Generate a code (in this case, the user's ID) for QR code
+  
+  // Generate a code (in this case, the user's full information) for QR code
   const generateCode = () => {
-    console.log("User object:", user); // Debugging: Log the entire user object to check its structure
     if (user && user.id) {
-      const userId = user.id; // Use user.id instead of user.uid
-      console.log("Generated User ID:", userId); // Debugging: Log the actual user ID
-      setGeneratedCode(userId); // Set the generated code (user ID) for QR code
+      const userData = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        contactNumber: profileData.contactNumber,
+      };
+      // const userDataString = JSON.stringify(userData); 
+
+      const qrUrl = `https://curly-space-acorn-v57p67wwx472pqgp-5173.app.github.dev/scan?userId=${user.id}&firstName=${encodeURIComponent(profileData.firstName)}&lastName=${encodeURIComponent(profileData.lastName)}&email=${encodeURIComponent(profileData.email)}&contactNumber=${profileData.contactNumber}`;
+
+      setGeneratedCode(qrUrl); 
+      checkUserActiveStatus();
+
     } else {
-      console.error("User ID is not available.");
+      console.error("User data is not available.");
     }
   };
 
-  // Function to download the QR code as an image
+  const checkUserActiveStatus = () => {
+    if (user && user.id) {
+      const userRef = doc(db, "qrScans", user.id);
+  
+      // Real-time listener for user document
+      const unsubscribe = onSnapshot(userRef, (userDoc) => {
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.active) {
+            console.log("User is active, redirecting to parking...");
+            unsubscribe(); // Unsubscribe to stop listening once user is active
+            navigate(`/dashboard/parking/${user.id}`); // Redirect to parking page
+          } else {
+            console.log("User is not active, please scan QR code to activate.");
+          }
+        } else {
+          console.log("User data not found in Firestore.");
+        }
+      });
+    }
+  };
+
+
   const downloadQRCode = () => {
     if (qrCodeRef.current) {
       // Use html2canvas to capture the QR code SVG and convert it to a canvas
@@ -60,7 +96,7 @@ export default function ProfilePage() {
         const imageUrl = canvas.toDataURL("image/png"); // Convert canvas to PNG image
         const link = document.createElement("a");
         link.href = imageUrl;
-        link.download = `${generatedCode}_qr.png`; // Set download file name
+        link.download = `${profileData.firstName}_${profileData.lastName}_qr.png`; // Set download file name
         link.click(); // Trigger the download
       });
     }
@@ -68,7 +104,7 @@ export default function ProfilePage() {
 
   // Check if user is available
   if (!user) {
-    return <p>Loading user data...</p>;  // Display loading message while user data is being fetched
+    return <p>Loading user data...</p>; // Display loading message while user data is being fetched
   }
 
   return (
@@ -141,8 +177,8 @@ export default function ProfilePage() {
       {/* Display QR Code if generatedCode has a value */}
       {generatedCode && (
         <Box style={{ marginTop: "20px", textAlign: "center" }}>
-          <Typography variant="h6">Generated Code (User ID):</Typography>
-          <Typography variant="body1">{generatedCode}</Typography>
+          <Typography variant="h6">Generated Code (User Data):</Typography>
+  
 
           {/* Render QR code */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>

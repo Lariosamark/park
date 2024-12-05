@@ -147,13 +147,13 @@ const SecurityDashboard = ({ user }) => {
       title: "Monitor Parking Spots",
       description: "Monitor parking spot availability across various locations.",
       action: "View Parking Spots",
-      href: "/parkings", // Security route for monitoring parkings
+      href: "/dashboard/parking", // Security route for monitoring parkings
     },
     {
       title: "QR Code Scanner",
       description: "Use QR codes to manage parking entries and exits.",
       action: "Open QR Scanner",
-      href: "/scanner", // Security route for QR code scanning
+      href: "/dashboard/Scanner", // Security route for QR code scanning
     },
     {
       title: "View Parking Analytics",

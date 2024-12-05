@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  getDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../../lib/firebase"; // Adjust the import according to your structure
 import LoadingPage from "../LoadingPage"; // A loading component for fetching data
 import {
@@ -27,9 +35,36 @@ export default function ViewLogs() {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const appsCollection = collection(db, "applications");
+        const appsCollection = collection(db, "qrScans");
         const snapshot = await getDocs(appsCollection);
-        const appsData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        
+        const appsData = await Promise.all(snapshot.docs.map(async (qrDoc) => {
+          const qrData = qrDoc.data();
+          const permitDoc = await getDoc(doc(db, "permits", qrDoc.id)); // Get corresponding permit data by userId
+          
+          let plateNo = "";
+          if (permitDoc.exists()) {
+            plateNo = permitDoc.data().plateNo; // Assuming 'plateNo' field exists
+          }
+          
+          // Fetch spotId from the 'parking' collection where userId matches qrDoc.id
+          let spotId = "";
+          const parkingQuery = query(collection(db, "parking"), where("userId", "==", qrDoc.id));
+          const parkingSnapshot = await getDocs(parkingQuery);
+          
+          if (!parkingSnapshot.empty) {
+            spotId = parkingSnapshot.docs[0].data().spotId; // Assuming the first document matches
+          }
+          
+          return { 
+            id: qrDoc.id, 
+            name: qrData.name, 
+            email: qrData.email, 
+            plateNo, 
+            spotId 
+          };
+        }));
+  
         setApplications(appsData);
       } catch (error) {
         console.error("Error fetching applications:", error);
@@ -37,9 +72,10 @@ export default function ViewLogs() {
         setLoading(false);
       }
     };
-
+  
     fetchApplications();
   }, []);
+  
 
   const handleDelete = async (id) => {
     try {
@@ -78,8 +114,8 @@ export default function ViewLogs() {
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>Vehicle Number</TableCell>
-              <TableCell>Parking Spot ID</TableCell>
+              <TableCell>Plate Number</TableCell>
+              <TableCell>Parking Spot</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -95,10 +131,13 @@ export default function ViewLogs() {
                 <TableRow key={app.id}>
                   <TableCell>{app.name}</TableCell>
                   <TableCell>{app.email}</TableCell>
-                  <TableCell>{app.vehicleNumber}</TableCell>
-                  <TableCell>{app.parkingSpotId}</TableCell>
+                  <TableCell>{app.plateNo}</TableCell>
+                  <TableCell>{app.spotId}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleDelete(app.id)} color="error">
+                    <IconButton
+                      onClick={() => handleDelete(app.id)}
+                      color="error"
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
@@ -110,8 +149,16 @@ export default function ViewLogs() {
       </TableContainer>
 
       {/* Snackbar for Notifications */}
-      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>
