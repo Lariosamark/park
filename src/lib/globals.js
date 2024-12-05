@@ -31,6 +31,15 @@ export const securityLinks = [
 
 ];
 
+
+export const vipLinks = [
+  { tag: "Dashboard", href: "/dashboard", icon: PieChartIcon },
+  { tag: "Profile", href: "/dashboard/Profile", icon: User },
+  { tag: "Parkings", href: "/dashboard/parking", icon: Car },
+  { tag: "Violations", href: "/dashboard/ViolationPage", icon: OctagonAlert },
+];
+
+
 export const formatTimestamp = (timestamp) => {
   const date = timestamp.toDate(); // Convert to JavaScript Date
   return date.toLocaleString(); // Format as locale string (e.g., 'MM/DD/YYYY, HH:MM:SS')

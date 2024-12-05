@@ -5,6 +5,11 @@ export default function HomePage() {
         <nav className="container mx-auto p-5 flex justify-between items-center">
           <h1 className="text-3xl font-bold">School Parking System</h1>
           <ul className="flex space-x-4">
+          <li>
+              <a href="/login" className="hover:underline">
+                  Login
+              </a>
+            </li>
             <li>
               <a href="#features" className="hover:underline">
                 Features

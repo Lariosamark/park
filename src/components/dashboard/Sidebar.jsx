@@ -1,5 +1,5 @@
 import { useUser } from "../../providers/AuthProvider";
-import { adminLinks, securityLinks, userLinks } from "../../lib/globals";
+import { adminLinks, securityLinks, userLinks, vipLinks } from "../../lib/globals";
 import { Link } from "react-router-dom";
 import { auth } from "../../lib/firebase";
 import Notifications from "./Notifications";
@@ -15,6 +15,9 @@ export function Sidebar() {
       break;
     case "Security":
       links = securityLinks;
+      break;
+    case "President":
+      links = vipLinks;
       break;
     default:
       links = userLinks;

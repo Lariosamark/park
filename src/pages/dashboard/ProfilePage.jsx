@@ -170,20 +170,20 @@ export default function ProfilePage() {
 
       <div style={{ marginTop: "20px" }}>
         <Button variant="contained" onClick={generateCode}>
-          Generate QR Code
+          Click QR Code
         </Button>
       </div>
 
       {/* Display QR Code if generatedCode has a value */}
       {generatedCode && (
         <Box style={{ marginTop: "20px", textAlign: "center" }}>
-          <Typography variant="h6">Generated Code (User Data):</Typography>
+          <Typography variant="h6"> QrCode:</Typography>
   
 
           {/* Render QR code */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div ref={qrCodeRef}>
-              <QRCode value={generatedCode} size={128} />
+              <QRCode value={generatedCode} size={360} />
             </div>
             <Button
               variant="contained"

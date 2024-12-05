@@ -1,16 +1,18 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { db } from "./firebase";
 import { doc, setDoc } from "firebase/firestore"; // Use setDoc instead of addDoc
 
 export default function QRScanHandler() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const saveScanData = async () => {
       const userId = searchParams.get("userId");
       const firstName = searchParams.get("firstName");
       const lastName = searchParams.get("lastName");
+
 
       const name = firstName + " " + lastName;
 
@@ -30,12 +32,14 @@ export default function QRScanHandler() {
             scannedAt: new Date(),
           });
           console.log("Scan data saved successfully!");
+
+          navigate(`/scan/${userId}`);
         } catch (error) {
           console.error("Error saving scan data:", error);
         }
       }
     };
-
+    navigate();
     saveScanData();
   }, [searchParams]);
 }

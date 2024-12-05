@@ -20,7 +20,7 @@ const AnalyticsPage = () => {
     const unsubscribeReports = onSnapshot(collection(db, "reports"), (snapshot) => {
       setReportsCount(snapshot.docs.length);
     });
-
+    
     const unsubscribePermits = onSnapshot(collection(db, "permits"), (snapshot) => {
       const permits = snapshot.docs.map(doc => doc.data());
       setPermitsData(permits);
@@ -30,7 +30,7 @@ const AnalyticsPage = () => {
       setParkingData(snapshot.docs.map(doc => doc.data()));
     });
 
-    const unsubscribeViolations = onSnapshot(collection(db, "violations"), (snapshot) => {
+    const unsubscribeViolations = onSnapshot(collection(db, "reports"), (snapshot) => {
       setViolationsData(snapshot.docs.map(doc => doc.data()));
     });
 

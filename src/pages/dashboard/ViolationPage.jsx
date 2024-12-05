@@ -50,18 +50,18 @@ export default function ViolationPage() {
     fetchViolations();
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteDoc(doc(db, "reports", id));
-      setViolations((prevViolations) => prevViolations.filter((violation) => violation.id !== id));
-      setSnackbarMessage("Violation report deleted successfully.");
-      setOpenSnackbar(true);
-    } catch (error) {
-      console.error("Error deleting violation:", error);
-      setSnackbarMessage("Error deleting violation.");
-      setOpenSnackbar(true);
-    }
-  };
+  // const handleDelete = async (id) => {
+  //   try {
+  //     await deleteDoc(doc(db, "reports", id));
+  //     setViolations((prevViolations) => prevViolations.filter((violation) => violation.id !== id));
+  //     setSnackbarMessage("Violation report deleted successfully.");
+  //     setOpenSnackbar(true);
+  //   } catch (error) {
+  //     console.error("Error deleting violation:", error);
+  //     setSnackbarMessage("Error deleting violation.");
+  //     setOpenSnackbar(true);
+  //   }
+  // };
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
@@ -95,7 +95,7 @@ export default function ViolationPage() {
               <TableCell>Plate Number</TableCell>
               <TableCell>Location</TableCell>
               <TableCell>Date</TableCell>
-              <TableCell>Actions</TableCell>
+              {/* <TableCell>Actions</TableCell> */}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -130,11 +130,11 @@ export default function ViolationPage() {
                         : new Date(violation.timestamp).toLocaleString()
                       : "N/A"}
                   </TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <IconButton onClick={() => handleDelete(violation.id)} color="error">
                       <DeleteIcon />
                     </IconButton>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))
             )}

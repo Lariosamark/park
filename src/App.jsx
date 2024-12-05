@@ -19,10 +19,12 @@ import RenewalPage from "./pages/dashboard/RenewalPage";
 import Scanner from "./pages/dashboard/Scanner";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 
-import QRScanHandler from './lib/QRScanHandler';
+import QRScanHandler from "./lib/QRScanHandler";
 import { getAuth } from "firebase/auth";
 import VisitorPage from "./pages/dashboard/VisitorPage";
-
+import VisitorsList from "./pages/dashboard/VisitorsList";
+import Visitor from "./pages/dashboard/Visitor";
+import ScanPage from "./pages/dashboard/ScanPage";
 
 export default function App() {
   const auth = getAuth();
@@ -53,13 +55,13 @@ export default function App() {
           <Route path="RenewalPage" element={<RenewalPage />} />
           <Route path="Scanner" element={<Scanner />} />
           <Route path="Visitors" element={<VisitorPage />} />
-          
-          
+          <Route path="Visitors/list" element={<VisitorsList />} />
+          <Route path="Visitors/:id" element={<Visitor />} />
         </Route>
 
         <Route path="/scan" element={<QRScanHandler />} />
+        <Route path="/scan/:userId" element={<ScanPage />} />
       </Routes>
-      
     </BrowserRouter>
   );
 }

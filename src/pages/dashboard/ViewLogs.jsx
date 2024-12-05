@@ -3,9 +3,8 @@ import {
   collection,
   getDocs,
   getDoc,
-  deleteDoc,
-  doc,
   query,
+  doc,
   where,
 } from "firebase/firestore";
 import { db } from "../../lib/firebase"; // Adjust the import according to your structure
@@ -20,11 +19,9 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
   Snackbar,
   Alert,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function ViewLogs() {
   const [applications, setApplications] = useState([]); // State to hold applications
@@ -35,62 +32,49 @@ export default function ViewLogs() {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const appsCollection = collection(db, "qrScans");
-        const snapshot = await getDocs(appsCollection);
-        
-        const appsData = await Promise.all(snapshot.docs.map(async (qrDoc) => {
-          const qrData = qrDoc.data();
-          const permitDoc = await getDoc(doc(db, "permits", qrDoc.id)); // Get corresponding permit data by userId
-          
-          let plateNo = "";
-          if (permitDoc.exists()) {
-            plateNo = permitDoc.data().plateNo; // Assuming 'plateNo' field exists
+        const viewlogsCollection = collection(db, "viewlogs");
+        const snapshot = await getDocs(viewlogsCollection);
+
+        const appsData = snapshot.docs.map(async (viewlogDoc) => {
+          const viewlogData = viewlogDoc.data();
+
+          let scannedAtFormatted = "";
+          if (viewlogData.timestamp) {
+            scannedAtFormatted = viewlogData.timestamp.toDate().toLocaleString(); // Converts to readable date-time
           }
-          
-          // Fetch spotId from the 'parking' collection where userId matches qrDoc.id
-          let spotId = "";
-          const parkingQuery = query(collection(db, "parking"), where("userId", "==", qrDoc.id));
-          const parkingSnapshot = await getDocs(parkingQuery);
-          
-          if (!parkingSnapshot.empty) {
-            spotId = parkingSnapshot.docs[0].data().spotId; // Assuming the first document matches
+
+          let timeOutFormatted = "";
+          if (viewlogData.timesOut) {  // Check if timesOut exists
+            timeOutFormatted = viewlogData.timesOut.toDate().toLocaleString(); // Converts to readable date-time
           }
-          
-          return { 
-            id: qrDoc.id, 
-            name: qrData.name, 
-            email: qrData.email, 
-            plateNo, 
-            spotId 
+
+          const phoneNumber = String(viewlogData.phoneNumber || 'N/A');  // Fallback if null
+
+          console.log(phoneNumber);
+
+          return {
+            id: viewlogDoc.id,
+            name: viewlogData.name,
+            scannedAt: scannedAtFormatted,
+            phoneNumber: viewlogData.phoneNumber,
+            plateNo: viewlogData.plateNumber,
+            spotId: viewlogData.spotId,
+            timeOut: timeOutFormatted,  // Add the timesOut field to the returned data
           };
-        }));
-  
-        setApplications(appsData);
+        });
+
+        // Wait for all promises to resolve
+        const resolvedData = await Promise.all(appsData);
+        setApplications(resolvedData);
       } catch (error) {
-        console.error("Error fetching applications:", error);
+        console.error("Error fetching viewlogs:", error);
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchApplications();
   }, []);
-  
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteDoc(doc(db, "applications", id));
-      setApplications((prevApplications) =>
-        prevApplications.filter((app) => app.id !== id)
-      );
-      setSnackbarMessage("Application deleted successfully.");
-      setOpenSnackbar(true);
-    } catch (error) {
-      console.error("Error deleting application:", error);
-      setSnackbarMessage("Error deleting application.");
-      setOpenSnackbar(true);
-    }
-  };
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
@@ -113,34 +97,29 @@ export default function ViewLogs() {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
+              <TableCell>Phone Number</TableCell>
               <TableCell>Plate Number</TableCell>
               <TableCell>Parking Spot</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Time & Date (In)</TableCell>
+              <TableCell>Time & Date (Out)</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {applications.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center">
-                  No applications submitted.
+                <TableCell colSpan={8} align="center">
+                  No data available.
                 </TableCell>
               </TableRow>
             ) : (
               applications.map((app) => (
                 <TableRow key={app.id}>
                   <TableCell>{app.name}</TableCell>
-                  <TableCell>{app.email}</TableCell>
+                  <TableCell>{app.phoneNumber}</TableCell>
                   <TableCell>{app.plateNo}</TableCell>
                   <TableCell>{app.spotId}</TableCell>
-                  <TableCell>
-                    <IconButton
-                      onClick={() => handleDelete(app.id)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
+                  <TableCell>{app.scannedAt}</TableCell>
+                  <TableCell>{app.timeOut}</TableCell>
                 </TableRow>
               ))
             )}
