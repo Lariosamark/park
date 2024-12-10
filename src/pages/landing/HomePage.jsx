@@ -8,22 +8,22 @@ export default function HomePage() {
           <h1 className="text-3xl font-bold">School Parking System</h1>
           <ul className="flex space-x-4">
           <li>
-              <Link href="/login" className="hover:underline">
+              <Link to="/login" className="hover:underline">
                   Login
               </Link>
             </li>
             <li>
-              <Link href="#features" className="hover:underline">
+              <Link to="#features" className="hover:underline">
                 Features
               </Link>
             </li>
             <li>
-              <Link href="#available-parking" className="hover:underline">
+              <Link to="#available-parking" className="hover:underline">
                 Available Parking
               </Link>
             </li>
             <li>
-              <Link href="#contact" className="hover:underline">
+              <Link to="#contact" className="hover:underline">
                 Contact
               </Link>
             </li>
