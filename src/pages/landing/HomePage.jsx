@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -6,24 +8,24 @@ export default function HomePage() {
           <h1 className="text-3xl font-bold">School Parking System</h1>
           <ul className="flex space-x-4">
           <li>
-              <a href="/login" className="hover:underline">
+              <Link href="/login" className="hover:underline">
                   Login
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#features" className="hover:underline">
+              <Link href="#features" className="hover:underline">
                 Features
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#available-parking" className="hover:underline">
+              <Link href="#available-parking" className="hover:underline">
                 Available Parking
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#contact" className="hover:underline">
+              <Link href="#contact" className="hover:underline">
                 Contact
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>
