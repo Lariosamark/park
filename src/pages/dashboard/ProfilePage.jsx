@@ -3,7 +3,6 @@ import { useUser } from "../../providers/AuthProvider";
 import { TextField, Button, Container, Typography, Grid, Box } from "@mui/material";
 import QRCode from "react-qr-code"; // QR code component for generating QR code
 import html2canvas from "html2canvas"; // Import html2canvas to capture SVG and convert to image
-import PermitForm from "../../components/dashboard/PermitForm";
 import { useNavigate } from "react-router-dom";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../../lib/firebase";

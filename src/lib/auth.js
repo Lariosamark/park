@@ -30,6 +30,7 @@ export const register = async (data) => {
       lastName: data.lastName,
       contactNumber: data.contactNumber,
       role: "User",
+      isVIP: false,
       createdAt: serverTimestamp(),
     };
     await setDoc(doc(db, "users", user.user.uid), userData);

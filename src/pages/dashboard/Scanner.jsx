@@ -15,7 +15,7 @@ export default function QRScannerPage() {
   const handleScan = (data) => {
     if (data && data.text) {
       try {
-        const url = new URL(data.text);  
+        const url = new URL(data.text);
         const urlParams = new URLSearchParams(url.search);
         
         const userId = urlParams.get('userId'); 
@@ -42,26 +42,22 @@ export default function QRScannerPage() {
       if (userSnap.exists()) {
         setUserInfo(userSnap.data());
 
+        // Save scan data to 'qrScans' collection
+        await saveScanData(userId, userSnap.data());
         setError(null);
       } else {
         // If not found in 'users', check 'visitors' collection
         const visitorRef = doc(db, "visitors", userId);
         const visitorSnap = await getDoc(visitorRef);
 
-        const userData = visitorSnap.data();
-
-        const firstName = userData.firstName;
-        const lastName = userData.lastName;
-        const name = firstName + ' ' + lastName;
-
-        await setDoc(doc(db, "qrScans", userId), {
-          userId: userId,
-          name: name || 'Unknown', // If name exists
-          email: userData.email || 'Unknown', // If email exists
-          scannedAt: new Date(),
-        });
-
         if (visitorSnap.exists()) {
+          const visitorData = visitorSnap.data();
+          const name = `${visitorData.firstName} ${visitorData.lastName}`;
+          
+          // Save scan data to 'qrScans' collection
+          await saveScanData(userId, visitorData);
+
+          setError(null);
           navigate(`/dashboard/parking/${userId}`); // Navigate if found in visitors
         } else {
           setError("No user found in 'users' or 'visitors' collections.");
@@ -72,6 +68,23 @@ export default function QRScannerPage() {
       setError("Network or database error. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveScanData = async (userId, userData) => {
+    try {
+      await setDoc(doc(db, "qrScans", userId), {
+        userId,
+        name: `${userData.firstName} ${userData.lastName}`,
+        email: userData.email || 'Unknown',
+        contactNumber: userData.contactNumber || 'Unknown',
+        active: true, // Mark as active
+        scannedAt: new Date(),
+      });
+      console.log("Scan data saved successfully!");
+    } catch (error) {
+      console.error("Error saving scan data:", error);
+      setError("Failed to save scan data.");
     }
   };
 

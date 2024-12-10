@@ -2,10 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
-  getDoc,
-  query,
-  doc,
-  where,
 } from "firebase/firestore";
 import { db } from "../../lib/firebase"; // Adjust the import according to your structure
 import LoadingPage from "../LoadingPage"; // A loading component for fetching data
@@ -21,6 +17,11 @@ import {
   Paper,
   Snackbar,
   Alert,
+  TextField, // Import TextField for the search input
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
 } from "@mui/material";
 
 export default function ViewLogs() {
@@ -28,6 +29,8 @@ export default function ViewLogs() {
   const [loading, setLoading] = useState(true);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // State to store the search query
+  const [sortBy, setSortBy] = useState("scannedAt"); // Default to sorting by scannedAt
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -49,8 +52,7 @@ export default function ViewLogs() {
           }
 
           const phoneNumber = String(viewlogData.phoneNumber || 'N/A');  // Fallback if null
-
-          console.log(phoneNumber);
+          const designation = String(viewlogData.designation || 'N/A');
 
           return {
             id: viewlogDoc.id,
@@ -60,6 +62,7 @@ export default function ViewLogs() {
             plateNo: viewlogData.plateNumber,
             spotId: viewlogData.spotId,
             timeOut: timeOutFormatted,  // Add the timesOut field to the returned data
+            designation: viewlogData.designation, // Add designation
           };
         });
 
@@ -80,6 +83,30 @@ export default function ViewLogs() {
     setOpenSnackbar(false);
   };
 
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  // Filter the applications based on the search query
+  const filteredApplications = applications.filter((app) => {
+    const lowercasedQuery = searchQuery.toLowerCase();
+    return (
+      (app.name?.toLowerCase().includes(lowercasedQuery) || '') ||
+      (app.phoneNumber?.toLowerCase().includes(lowercasedQuery) || '') ||
+      (app.plateNo?.toLowerCase().includes(lowercasedQuery) || '') ||
+      (app.spotId?.toLowerCase().includes(lowercasedQuery) || '') ||
+      (app.designation?.toLowerCase().includes(lowercasedQuery) || '')  // Added designation for searching
+    );
+  });
+
+  // Sorting the applications based on selected sort criteria
+  const sortedApplications = [...filteredApplications].sort((a, b) => {
+    const valA = a[sortBy];
+    const valB = b[sortBy];
+
+    return valA > valB ? 1 : -1; // Ascending order
+  });
+
   if (loading) return <LoadingPage />;
 
   return (
@@ -87,6 +114,29 @@ export default function ViewLogs() {
       <Typography variant="h4" gutterBottom>
         View Logs
       </Typography>
+
+      {/* Search Input */}
+      <TextField
+        label="Search"
+        variant="outlined"
+        fullWidth
+        value={searchQuery}
+        onChange={handleSearchChange}
+        style={{ marginBottom: "20px" }} // Add some space below the search input
+      />
+
+      {/* Dropdown for Sorting */}
+      <FormControl fullWidth style={{ marginBottom: "20px" }}>
+        <InputLabel>Sort By</InputLabel>
+        <Select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          label="Sort By"
+        >
+          <MenuItem value="scannedAt">Time & Date (In)</MenuItem>
+          <MenuItem value="timeOut">Time & Date (Out)</MenuItem>
+        </Select>
+      </FormControl>
 
       {/* Display User Applications in Table Format */}
       <Typography variant="h5" gutterBottom>
@@ -102,17 +152,18 @@ export default function ViewLogs() {
               <TableCell>Parking Spot</TableCell>
               <TableCell>Time & Date (In)</TableCell>
               <TableCell>Time & Date (Out)</TableCell>
+              <TableCell>Designation</TableCell> 
             </TableRow>
           </TableHead>
           <TableBody>
-            {applications.length === 0 ? (
+            {sortedApplications.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} align="center">
                   No data available.
                 </TableCell>
               </TableRow>
             ) : (
-              applications.map((app) => (
+              sortedApplications.map((app) => (
                 <TableRow key={app.id}>
                   <TableCell>{app.name}</TableCell>
                   <TableCell>{app.phoneNumber}</TableCell>
@@ -120,6 +171,7 @@ export default function ViewLogs() {
                   <TableCell>{app.spotId}</TableCell>
                   <TableCell>{app.scannedAt}</TableCell>
                   <TableCell>{app.timeOut}</TableCell>
+                  <TableCell>{app.designation}</TableCell> 
                 </TableRow>
               ))
             )}
@@ -143,4 +195,4 @@ export default function ViewLogs() {
       </Snackbar>
     </Container>
   );
-}
+}``

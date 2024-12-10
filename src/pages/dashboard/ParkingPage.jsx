@@ -86,22 +86,22 @@ function ParkingLayout() {
     fetchUserRole();
   }, [user]);
 
-  useEffect(() => {
-    const checkVisitorSpot = async () => {
-      try {
-        const visitorDoc = await getDoc(doc(db, "visitors", id));
-        if (visitorDoc.exists()) {
-          setIsVisitorSpot(true); // The spot is associated with a visitor
-        } else {
-          setIsVisitorSpot(false); // Not linked to a visitor
-        }
-      } catch (error) {
-        console.error("Error fetching visitor data:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const checkVisitorSpot = async () => {
+  //     try {
+  //       const visitorDoc = await getDoc(doc(db, "visitors", id));
+  //       if (visitorDoc.exists()) {
+  //         setIsVisitorSpot(true); // The spot is associated with a visitor
+  //       } else {
+  //         setIsVisitorSpot(false); // Not linked to a visitor
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching visitor data:", error.message);
+  //     }
+  //   };
 
-    checkVisitorSpot();
-  }, [id]);
+  //   checkVisitorSpot();
+  // }, [id]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "parking"), (snapshot) => {
@@ -116,11 +116,211 @@ function ParkingLayout() {
 
     return () => unsubscribe();
   }, []);
+  
+  const isRoleAllowedForSpot = (spotId, userRole) => {
+    if (spotId.startsWith("Vip") && !["president", "security"].includes(userRole.toLowerCase())) {
+      return { allowed: false, message: "Access denied: Only VIP personnel can access." };
+    }
+    if (spotId.startsWith("V") && !spotId.startsWith("Vip") && userRole.toLowerCase() !== "security") {
+      return { allowed: false, message: "Access denied: Only Security personnel can access." };
+    }
+    return { allowed: true };
+  };
 
   const handleSpotClick = async (spotId) => {
-    
+
+    const roleCheck = isRoleAllowedForSpot(spotId, userRole);
+    if (!roleCheck.allowed) {
+      showSnackbar(roleCheck.message);
+      return;
+    }
+
+    if (user && userRole.toLowerCase() === "president") {
+      try {
+        // Check if the user already has a reserved spot and whether it's active
+        const parkingQuery = query(
+          collection(db, "parking"),
+          where("userId", "==", user.uid)
+        );
+        const querySnapshot = await getDocs(parkingQuery);
+
+        if (!querySnapshot.empty) {
+          // Check if the user already has a reserved spot, but check if it's not active
+          const userParkingData = querySnapshot.docs[0].data();
+          if (userParkingData.occupied === true) {
+            showSnackbar(
+              "Access denied: You already have an active parking spot."
+            );
+            return;
+          }
+        }
+
+        // Fetch user details for logging (if needed)
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userName = userDoc.exists()
+          ? userDoc.data().firstName + " " + userDoc.data().lastName
+          : "Unknown"; // Get user name
+        const phoneNumber = userDoc.exists()
+          ? userDoc.data().contactNumber
+          : "Unknown"; // Get user contact
+
+        // Reserve the parking spot
+        await setDoc(doc(db, "parking", spotId), {
+          spotId: spotId,
+          userId: user.uid,
+          occupied: true,
+          timestamp: new Date(),
+        });
+
+        // Check if there's already a log for this spotId and userId
+        const viewlogQuery = query(
+          collection(db, "viewlogs"),
+          where("spotId", "==", spotId),
+          where("userId", "==", user.uid)
+        );
+        const viewlogSnapshot = await getDocs(viewlogQuery);
+
+        let docId = `${spotId}_${user.uid}`;
+        if (!viewlogSnapshot.empty) {
+          const existingLogDoc = viewlogSnapshot.docs[0];
+          const existingLogData = existingLogDoc.data();
+
+          if (existingLogData.freed === true) {
+            docId = `${spotId}_${user.uid}_${new Date().getTime()}`;
+          } else {
+            // Otherwise, update the existing log
+            await updateDoc(doc(db, "viewlogs", existingLogDoc.id), {
+              freed: false,
+              reserved: true,
+              timestamp: new Date(),
+            });
+            showSnackbar("Parking spot reserved successfully.");
+            return;
+          }
+        }
+
+        // Add log to viewlogs collection with unique docId if reserved
+        await setDoc(doc(db, "viewlogs", docId), {
+          userId: user.uid,
+          name: userName || "Unknown", // Get user's display name or fallback
+          spotId: spotId,
+          phoneNumber: phoneNumber,
+          designation: "President",
+          freed: false,
+          reserved: true,
+          timestamp: new Date(),
+        });
+
+        // Update local state
+        setOccupiedSpots((prev) => new Set(prev).add(spotId));
+
+        showSnackbar("Parking spot reserved successfully.");
+      } catch (error) {
+        console.error("Error updating Firestore:", error);
+        showSnackbar("Error reserving parking spot. Please try again.");
+      }
+    }
+
+    if (occupiedSpots.has(spotId) && userRole.toLowerCase() === "security") {
+      try {
+        // Fetch the current parking data
+        const parkingDoc = await getDoc(doc(db, "parking", spotId));
+        const spotData = parkingDoc.data();
+
+        if (spotData && spotData.userId) {
+          // Fetch the user's role from the 'users' collection
+          const usersDoc = await getDoc(doc(db, "users", spotData.userId));
+          let isPresident = false;
+
+          if (usersDoc.exists()) {
+            const userData = usersDoc.data();
+            isPresident = userData.role && userData.role.toLowerCase() === "president";
+          }
+
+          await updateDoc(doc(db, "parking", spotId), {
+            occupied: false,
+          });
+
+          // Prepare log details (common for both cases)
+          const permitDoc = await getDoc(doc(db, "permits", user.uid));
+          const userDoc = await getDoc(doc(db, "qrScans", spotData.userId));
+          const userName = userDoc.exists() ? userDoc.data().name : "Unknown";
+          const plateNo = permitDoc.exists() ? permitDoc.data().plateNo : "Unknown";
+          const email = userDoc.exists() ? userDoc.data().email : "Unknown";
+
+          const viewlogQuery = query(
+            collection(db, "viewlogs"),
+            where("spotId", "==", spotId),
+            where("userId", "==", spotData.userId)
+          );
+          const viewlogSnapshot = await getDocs(viewlogQuery);
+
+          let docId = `${spotId}_${spotData.userId}`;
+          if (!viewlogSnapshot.empty) {
+            const existingLogDoc = viewlogSnapshot.docs[0];
+            const existingLogData = existingLogDoc.data();
+
+            if (!existingLogData.freed) {
+              // Update existing log
+              await updateDoc(doc(db, "viewlogs", existingLogDoc.id), {
+                freed: true,
+                reserved: false,
+                timesOut: new Date(),
+              });
+              showSnackbar("Spot marked as available.");
+              return;
+            }
+            // Generate a new unique ID if freed is already true
+            docId = `${spotId}_${spotData.userId}_${new Date().getTime()}`;
+          }
+
+          // Add log to 'viewlogs' collection
+          await setDoc(doc(db, "viewlogs", docId), {
+            userId: spotData.userId,
+            name: userName,
+            email: email,
+            spotId: spotId,
+            plateNumber: plateNo,
+            freed: true,
+            reserved: false,
+            timesOut: new Date(),
+          });
+
+          // Skip QR update if the user is a president
+          if (!isPresident) {
+            // Update 'qrScans' only if the user is not a president
+            await updateDoc(doc(db, "qrScans", spotData.userId), {
+              active: false,
+              timeOut: new Date(),
+            });
+          }
+
+          // Update local state to reflect changes
+          setOccupiedSpots((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(spotId);
+            return newSet;
+          });
+
+          showSnackbar("Spot marked as available.");
+        } else {
+          showSnackbar("No user data found for this spot.");
+        }
+      } catch (error) {
+        console.error("Error updating parking spot:", error);
+        showSnackbar("Error updating the parking spot. Please try again.");
+      }
+    } else {
+      showSnackbar("This spot is already available.");
+    }
+
+
     if (userRole && userRole.toLowerCase() === "security") {
-      if (spotId.startsWith("V") && !occupiedSpots.has(spotId)) {
+      if (
+        spotId.startsWith("V") &&
+        !spotId.startsWith("Vip") &&
+        !occupiedSpots.has(spotId)
+      ) {
         const path = window.location.pathname;
 
         const pathParts = path.split("/");
@@ -133,26 +333,26 @@ function ParkingLayout() {
           showSnackbar("No visitor ID provided. Reservation cannot proceed.");
           return;
         }
-  
+
         try {
           // Check if spotId exists in the 'visitor' collection
           const visitorDocRef = doc(db, "visitors", spotIdFromUrl);
           const visitorDoc = await getDoc(visitorDocRef);
-  
+
           if (!visitorDoc.exists()) {
             showSnackbar("Visitor not found. Unable to proceed.");
             return;
           }
-  
+
           // Retrieve visitor data (name and plate number)
           const visitorData = visitorDoc.data();
 
-          const visitorfirstName = visitorData.firstName || "Unknown";  // Fallback to "Unknown"
-          const visitorNumber = visitorData.phoneNumber || "Unknown";  // Fallback to "Unknown"
-          const visitorlastName = visitorData.lastName || "Unknown";  // Fallback to "Unknown"
-          const visitorName = visitorfirstName+ ' ' + visitorlastName;
-          const visitorPlateNumber = visitorData.plateNumber || "Unknown";  // Fallback to "Unknown"
-  
+          const visitorfirstName = visitorData.firstName || "Unknown"; // Fallback to "Unknown"
+          const visitorNumber = visitorData.phoneNumber || "Unknown"; // Fallback to "Unknown"
+          const visitorlastName = visitorData.lastName || "Unknown"; // Fallback to "Unknown"
+          const visitorName = visitorfirstName + " " + visitorlastName;
+          const visitorPlateNumber = visitorData.plateNumber || "Unknown"; // Fallback to "Unknown"
+
           // Reserve the visitor spot (same logic as before)
           await setDoc(doc(db, "parking", spotId), {
             spotId: spotId,
@@ -160,18 +360,19 @@ function ParkingLayout() {
             occupied: true,
             timestamp: new Date(),
           });
-  
+
           await setDoc(doc(db, "viewlogs", `${spotId}_${spotIdFromUrl}`), {
             userId: spotIdFromUrl,
-            phoneNumber:visitorNumber,
-            name: visitorName,  // Name from the visitor document
-            plateNumber: visitorPlateNumber,  // Plate number from the visitor document
+            phoneNumber: visitorNumber,
+            name: visitorName, // Name from the visitor document
+            plateNumber: visitorPlateNumber, // Plate number from the visitor document
             spotId: spotId,
+            designation: "Visitor",
             reserved: true,
             freed: false,
             timestamp: new Date(),
           });
-  
+
           // Update local state
           setOccupiedSpots((prev) => new Set(prev).add(spotId));
           showSnackbar("Visitor spot reserved successfully.");
@@ -273,14 +474,16 @@ function ParkingLayout() {
 
     // Logic for regular users
     if (!hasActiveQR && userRole.toLowerCase() === "user") {
-      showSnackbar(
-        "Access denied: You need an active QR scan to click spot."
-      );
+      showSnackbar("Access denied: You need an active QR scan to click spot.");
       return;
     }
 
     if (user && userRole.toLowerCase() === "user") {
       try {
+        if(occupiedSpots.has(spotId)){
+          showSnackbar("Error: Only security can access this spot.")
+          return;
+        }
         // Check if the user already has a reserved spot and whether it's active
         const parkingQuery = query(
           collection(db, "parking"),
@@ -299,20 +502,18 @@ function ParkingLayout() {
           }
         }
 
-        if (userRole !== "security" && spotId.startsWith("V")) {
-          showSnackbar("Only security personnel can manage visitor spots.");
-          return;
-        }
-
         // Permit validation
         const permitDoc = await getDoc(doc(db, "permits", user.uid));
         if (permitDoc.exists()) {
           const permitData = permitDoc.data();
           const plateNumber = permitData.plateNo;
+          const designation = permitData.designation;
 
           const userDoc = await getDoc(doc(db, "qrScans", user.uid));
           const userName = userDoc.exists() ? userDoc.data().name : "Unknown"; // Get user name
-          const phoneNumber = userDoc.exists() ? userDoc.data().contactNumber : "Unknown"; // Get user name
+          const phoneNumber = userDoc.exists()
+            ? userDoc.data().contactNumber
+            : "Unknown"; // Get user name
 
           // Reserve the parking spot
           await setDoc(doc(db, "parking", spotId), {
@@ -333,7 +534,7 @@ function ParkingLayout() {
           );
           const viewlogSnapshot = await getDocs(viewlogQuery);
 
-          let docId = `${spotId}_${user.uid}`; 
+          let docId = `${spotId}_${user.uid}`;
           if (!viewlogSnapshot.empty) {
             const existingLogDoc = viewlogSnapshot.docs[0];
             const existingLogData = existingLogDoc.data();
@@ -359,6 +560,7 @@ function ParkingLayout() {
             spotId: spotId,
             plateNumber: plateNumber,
             phoneNumber: phoneNumber,
+            designation: designation,
             freed: false,
             reserved: true,
             timestamp: new Date(),
@@ -400,17 +602,19 @@ function ParkingLayout() {
 
   const getSpotColor = (spotId) => {
     if (occupiedSpots.has(spotId)) {
-      if(spotId.startsWith("Vip")){
+      if (spotId.startsWith("Vip")) {
         return "#9C89B8";
+      } else {
+        return "red";
       }
     }
     if (spotId.startsWith("Motor")) {
       return "#64B5F6";
     } else if (spotId.startsWith("Car")) {
       return "#81C784";
-    }else if (spotId.startsWith("Vip")) {
+    } else if (spotId.startsWith("Vip")) {
       return "#F0A6CA";
-    }else if (spotId.startsWith("V")) {
+    } else if (spotId.startsWith("V")) {
       return "#FFEB3B";
     }
     return "#81D4FA";
@@ -482,7 +686,7 @@ function ParkingLayout() {
                   cursor: "pointer",
                 }}
               >
-                Car Spot {spot}
+                VIP Spot {spot}
               </Box>
             ))}
           </Grid>

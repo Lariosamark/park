@@ -36,7 +36,7 @@ export const vipLinks = [
   { tag: "Dashboard", href: "/dashboard", icon: PieChartIcon },
   { tag: "Profile", href: "/dashboard/Profile", icon: User },
   { tag: "Parkings", href: "/dashboard/parking", icon: Car },
-  { tag: "Violations", href: "/dashboard/ViolationPage", icon: OctagonAlert },
+  { tag: "Report", href: "/dashboard/ReportViolationPage", icon: TriangleAlert },
 ];
 
 

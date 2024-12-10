@@ -24,7 +24,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="w-[300px] bg-red-950 flex flex-col">
+    <div className="w-[300px] bg-red-950 flex flex-col sm:w-[100px]">
       <section className="flex items-center p-4 gap-4 justify-between">
         <img src="/logo.png" alt="logo" className=" h-10" />
         <h1 className="text-lg font-bold text-white">Parking System</h1>
@@ -38,7 +38,7 @@ export function Sidebar() {
             className="text-white/90 p-4 flex items-center gap-4 hover:bg-red-900"
           >
             <link.icon />
-            {link.tag}
+            <p className="md:hidden">{link.tag}</p>
           </Link>
         ))}
       </section>
