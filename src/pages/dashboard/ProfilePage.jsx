@@ -6,10 +6,14 @@ import html2canvas from "html2canvas"; // Import html2canvas to capture SVG and 
 import { useNavigate } from "react-router-dom";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../../lib/firebase";
+import { usePermit } from "./usePermit";
 
 export default function ProfilePage() {
   const { user } = useUser(); // Get user data from AuthProvider
   const [editMode, setEditMode] = useState(false); // Toggle edit mode
+
+  const { permit, loading } = usePermit(user.id);
+
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -106,6 +110,12 @@ export default function ProfilePage() {
     return <p>Loading user data...</p>; // Display loading message while user data is being fetched
   }
 
+  if(loading) {
+    return <p>Loading permit...</p>; // Display loading message while user data is being fetched
+  }
+
+  console.log(permit)
+
   return (
     <Container style={{ marginTop: "20px" }}>
       <Typography variant="h4" gutterBottom>
@@ -168,7 +178,7 @@ export default function ProfilePage() {
       </div>
 
       <div style={{ marginTop: "20px" }}>
-        <Button variant="contained" onClick={generateCode}>
+        <Button variant="contained" onClick={generateCode} disabled={false}>
           Click QR Code
         </Button>
       </div>
