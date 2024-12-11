@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../../providers/AuthProvider";
-import { TextField, Button, Container, Typography, Grid, Box } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Container,
+  Typography,
+  Grid,
+  Box,
+} from "@mui/material";
 import QRCode from "react-qr-code"; // QR code component for generating QR code
 import html2canvas from "html2canvas"; // Import html2canvas to capture SVG and convert to image
 import { useNavigate } from "react-router-dom";
@@ -14,12 +21,15 @@ export default function ProfilePage() {
 
   const { permit, loading } = usePermit(user.id);
 
+  console.log(permit);
+
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     email: user?.email || "",
     contactNumber: user?.contactNumber || "",
   });
+  
   const [generatedCode, setGeneratedCode] = useState(""); // Store the generated code for QR
   const qrCodeRef = useRef(null); // Reference for the QR code component
   const navigate = useNavigate();
@@ -47,7 +57,6 @@ export default function ProfilePage() {
     setEditMode(false);
   };
 
-  
   // Generate a code (in this case, the user's full information) for QR code
   const generateCode = () => {
     if (user && user.id) {
@@ -57,13 +66,20 @@ export default function ProfilePage() {
         email: profileData.email,
         contactNumber: profileData.contactNumber,
       };
-      // const userDataString = JSON.stringify(userData); 
+      // const userDataString = JSON.stringify(userData);
 
-      const qrUrl = `https://curly-space-acorn-v57p67wwx472pqgp-5173.app.github.dev/scan?userId=${user.id}&firstName=${encodeURIComponent(profileData.firstName)}&lastName=${encodeURIComponent(profileData.lastName)}&email=${encodeURIComponent(profileData.email)}&contactNumber=${profileData.contactNumber}`;
+      const qrUrl = `https://curly-space-acorn-v57p67wwx472pqgp-5173.app.github.dev/scan?userId=${
+        user.id
+      }&firstName=${encodeURIComponent(
+        profileData.firstName
+      )}&lastName=${encodeURIComponent(
+        profileData.lastName
+      )}&email=${encodeURIComponent(profileData.email)}&contactNumber=${
+        profileData.contactNumber
+      }`;
 
-      setGeneratedCode(qrUrl); 
+      setGeneratedCode(qrUrl);
       checkUserActiveStatus();
-
     } else {
       console.error("User data is not available.");
     }
@@ -72,7 +88,7 @@ export default function ProfilePage() {
   const checkUserActiveStatus = () => {
     if (user && user.id) {
       const userRef = doc(db, "qrScans", user.id);
-  
+
       // Real-time listener for user document
       const unsubscribe = onSnapshot(userRef, (userDoc) => {
         if (userDoc.exists()) {
@@ -90,7 +106,6 @@ export default function ProfilePage() {
       });
     }
   };
-
 
   const downloadQRCode = () => {
     if (qrCodeRef.current) {
@@ -110,11 +125,9 @@ export default function ProfilePage() {
     return <p>Loading user data...</p>; // Display loading message while user data is being fetched
   }
 
-  if(loading) {
+  if (loading) {
     return <p>Loading permit...</p>; // Display loading message while user data is being fetched
   }
-
-  console.log(permit)
 
   return (
     <Container style={{ marginTop: "20px" }}>
@@ -177,20 +190,31 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <div style={{ marginTop: "20px" }}>
-        <Button variant="contained" onClick={generateCode} disabled={false}>
-          Click QR Code
-        </Button>
-      </div>
+      {permit && (
+        <div style={{ marginTop: "20px" }}>
+          <Button
+            variant="contained"
+            onClick={generateCode}
+            disabled={permit.status == "Pending"}
+          >
+            Click QR Code
+          </Button>
+        </div>
+      )}
 
       {/* Display QR Code if generatedCode has a value */}
       {generatedCode && (
         <Box style={{ marginTop: "20px", textAlign: "center" }}>
           <Typography variant="h6"> QrCode:</Typography>
-  
 
           {/* Render QR code */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
             <div ref={qrCodeRef}>
               <QRCode value={generatedCode} size={360} />
             </div>
@@ -208,7 +232,8 @@ export default function ProfilePage() {
 
       <div style={{ marginTop: "20px" }}>
         <Typography variant="body1">
-          Account Created: {new Date(user?.createdAt?.seconds * 1000).toLocaleDateString()}
+          Account Created:{" "}
+          {new Date(user?.createdAt?.seconds * 1000).toLocaleDateString()}
         </Typography>
         <Typography variant="body1">Role: {user?.role}</Typography>
       </div>
