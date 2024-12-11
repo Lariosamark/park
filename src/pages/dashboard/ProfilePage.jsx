@@ -131,112 +131,113 @@ export default function ProfilePage() {
 
   return (
     <Container style={{ marginTop: "20px" }}>
-      <Typography variant="h4" gutterBottom>
-        {editMode ? "Edit Profile" : "Profile"}
-      </Typography>
+  <Typography variant="h4" gutterBottom>
+    {editMode ? "Edit Profile" : "Profile"}
+  </Typography>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="First Name"
-            name="firstName"
-            value={profileData.firstName}
-            onChange={handleChange}
-            fullWidth
-            disabled={!editMode}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Last Name"
-            name="lastName"
-            value={profileData.lastName}
-            onChange={handleChange}
-            fullWidth
-            disabled={!editMode}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Email"
-            name="email"
-            value={profileData.email}
-            onChange={handleChange}
-            fullWidth
-            disabled={!editMode}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Contact Number"
-            name="contactNumber"
-            value={profileData.contactNumber}
-            onChange={handleChange}
-            fullWidth
-            disabled={!editMode}
-          />
-        </Grid>
-      </Grid>
+  <Grid container spacing={2}>
+    <Grid item xs={12} sm={6} md={4}> {/* Added md to ensure it's responsive */}
+      <TextField
+        label="First Name"
+        name="firstName"
+        value={profileData.firstName}
+        onChange={handleChange}
+        fullWidth
+        disabled={!editMode}
+      />
+    </Grid>
+    <Grid item xs={12} sm={6} md={4}> {/* Added md for responsiveness */}
+      <TextField
+        label="Last Name"
+        name="lastName"
+        value={profileData.lastName}
+        onChange={handleChange}
+        fullWidth
+        disabled={!editMode}
+      />
+    </Grid>
+    <Grid item xs={12} sm={6} md={4}> {/* Adjusted for better layout */}
+      <TextField
+        label="Email"
+        name="email"
+        value={profileData.email}
+        onChange={handleChange}
+        fullWidth
+        disabled={!editMode}
+      />
+    </Grid>
+    <Grid item xs={12} sm={6} md={4}> {/* Adjusted for responsiveness */}
+      <TextField
+        label="Contact Number"
+        name="contactNumber"
+        value={profileData.contactNumber}
+        onChange={handleChange}
+        fullWidth
+        disabled={!editMode}
+      />
+    </Grid>
+  </Grid>
 
-      <div style={{ marginTop: "20px" }}>
-        {editMode ? (
-          <Button variant="contained" color="primary" onClick={handleSave}>
-            Save
-          </Button>
-        ) : (
-          <Button variant="contained" onClick={() => setEditMode(true)}>
-            Edit Profile
-          </Button>
-        )}
-      </div>
+  <div style={{ marginTop: "20px" }}>
+    {editMode ? (
+      <Button variant="contained" color="primary" onClick={handleSave}>
+        Save
+      </Button>
+    ) : (
+      <Button variant="contained" onClick={() => setEditMode(true)}>
+        Edit Profile
+      </Button>
+    )}
+  </div>
 
-      {permit && (
-        <div style={{ marginTop: "20px" }}>
-          <Button
-            variant="contained"
-            onClick={generateCode}
-            disabled={permit.status == "Pending"}
-          >
-            Click QR Code
-          </Button>
+  {permit && (
+    <div style={{ marginTop: "20px" }}>
+      <Button
+        variant="contained"
+        onClick={generateCode}
+        disabled={permit.status == "Pending"}
+      >
+        Click QR Code
+      </Button>
+    </div>
+  )}
+
+  {/* Display QR Code if generatedCode has a value */}
+  {generatedCode && (
+    <Box style={{ marginTop: "20px", textAlign: "center" }}>
+      <Typography variant="h6"> QrCode:</Typography>
+
+      {/* Render QR code */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <div ref={qrCodeRef}>
+          <QRCode value={generatedCode} size={360} />
         </div>
-      )}
-
-      {/* Display QR Code if generatedCode has a value */}
-      {generatedCode && (
-        <Box style={{ marginTop: "20px", textAlign: "center" }}>
-          <Typography variant="h6"> QrCode:</Typography>
-
-          {/* Render QR code */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <div ref={qrCodeRef}>
-              <QRCode value={generatedCode} size={360} />
-            </div>
-            <Button
-              variant="contained"
-              color="secondary"
-              style={{ marginTop: "10px" }}
-              onClick={downloadQRCode}
-            >
-              Download QR Code
-            </Button>
-          </div>
-        </Box>
-      )}
-
-      <div style={{ marginTop: "20px" }}>
-        <Typography variant="body1">
-          Account Created:{" "}
-          {new Date(user?.createdAt?.seconds * 1000).toLocaleDateString()}
-        </Typography>
-        <Typography variant="body1">Role: {user?.role}</Typography>
+        <Button
+          variant="contained"
+          color="secondary"
+          style={{ marginTop: "10px" }}
+          onClick={downloadQRCode}
+        >
+          Download QR Code
+        </Button>
       </div>
-    </Container>
+    </Box>
+  )}
+
+  <div style={{ marginTop: "20px" }}>
+    <Typography variant="body1">
+      Account Created:{" "}
+      {new Date(user?.createdAt?.seconds * 1000).toLocaleDateString()}
+    </Typography>
+    <Typography variant="body1">Role: {user?.role}</Typography>
+  </div>
+</Container>
+
   );
 }
