@@ -216,7 +216,7 @@ export default function ProfilePage() {
         }}
       >
         <div ref={qrCodeRef}>
-          <QRCode value={generatedCode} size={360} />
+          <QRCode value={generatedCode} size={200} />
         </div>
         <Button
           variant="contained"
