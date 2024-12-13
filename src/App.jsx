@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/landing/HomePage";
 import LandingLayout from "./components/landing/LandingLayout";
 import LoginPage from "./pages/auth/LoginPage";
@@ -31,7 +31,7 @@ export default function App() {
   const user = auth.currentUser;
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -62,6 +62,6 @@ export default function App() {
         <Route path="/scan" element={<QRScanHandler />} />
         <Route path="/scan/:userId" element={<ScanPage />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
