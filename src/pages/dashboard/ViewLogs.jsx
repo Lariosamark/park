@@ -41,14 +41,14 @@ export default function ViewLogs() {
         const appsData = snapshot.docs.map(async (viewlogDoc) => {
           const viewlogData = viewlogDoc.data();
 
-          let scannedAtFormatted = "";
+          let scannedAtFormatted = null;
           if (viewlogData.timestamp) {
-            scannedAtFormatted = viewlogData.timestamp.toDate().toLocaleString(); // Converts to readable date-time
+            scannedAtFormatted = viewlogData.timestamp.toDate(); // Store as Date object for sorting
           }
 
-          let timeOutFormatted = "";
+          let timeOutFormatted = null;
           if (viewlogData.timesOut) {  // Check if timesOut exists
-            timeOutFormatted = viewlogData.timesOut.toDate().toLocaleString(); // Converts to readable date-time
+            timeOutFormatted = viewlogData.timesOut.toDate(); // Store as Date object for sorting
           }
 
           const phoneNumber = String(viewlogData.phoneNumber || 'N/A');  // Fallback if null
@@ -61,7 +61,7 @@ export default function ViewLogs() {
             phoneNumber: viewlogData.phoneNumber,
             plateNo: viewlogData.plateNumber,
             spotId: viewlogData.spotId,
-            timeOut: timeOutFormatted,  // Add the timesOut field to the returned data
+            timeOut: timeOutFormatted,  // Store timesOut as Date
             designation: viewlogData.designation, // Add designation
           };
         });
@@ -104,7 +104,17 @@ export default function ViewLogs() {
     const valA = a[sortBy];
     const valB = b[sortBy];
 
-    return valA > valB ? 1 : -1; // Ascending order
+    // Sorting logic for names based on the first letter
+    if (sortBy === 'name') {
+      const firstLetterA = a.name ? a.name[0].toUpperCase() : '';
+      const firstLetterB = b.name ? b.name[0].toUpperCase() : '';
+      return firstLetterA.localeCompare(firstLetterB);
+    }
+
+    if (valA && valB) {
+      return valA > valB ? 1 : -1; // Ascending order for Dates and other values
+    }
+    return 0;
   });
 
   if (loading) return <LoadingPage />;
@@ -135,6 +145,7 @@ export default function ViewLogs() {
         >
           <MenuItem value="scannedAt">Time & Date (In)</MenuItem>
           <MenuItem value="timeOut">Time & Date (Out)</MenuItem>
+          <MenuItem value="name">Name (A-Z)</MenuItem> {/* Added sorting by Name */}
         </Select>
       </FormControl>
 
@@ -158,7 +169,7 @@ export default function ViewLogs() {
           <TableBody>
             {sortedApplications.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={7} align="center">
                   No data available.
                 </TableCell>
               </TableRow>
@@ -169,8 +180,8 @@ export default function ViewLogs() {
                   <TableCell>{app.phoneNumber}</TableCell>
                   <TableCell>{app.plateNo}</TableCell>
                   <TableCell>{app.spotId}</TableCell>
-                  <TableCell>{app.scannedAt}</TableCell>
-                  <TableCell>{app.timeOut}</TableCell>
+                  <TableCell>{app.scannedAt ? app.scannedAt.toLocaleString() : "N/A"}</TableCell>
+                  <TableCell>{app.timeOut ? app.timeOut.toLocaleString() : "N/A"}</TableCell>
                   <TableCell>{app.designation}</TableCell> 
                 </TableRow>
               ))
@@ -195,4 +206,4 @@ export default function ViewLogs() {
       </Snackbar>
     </Container>
   );
-}``
+}

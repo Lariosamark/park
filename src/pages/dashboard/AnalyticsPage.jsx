@@ -20,7 +20,7 @@ const AnalyticsPage = () => {
     const unsubscribeReports = onSnapshot(collection(db, "reports"), (snapshot) => {
       setReportsCount(snapshot.docs.length);
     });
-    
+
     const unsubscribePermits = onSnapshot(collection(db, "permits"), (snapshot) => {
       const permits = snapshot.docs.map(doc => doc.data());
       setPermitsData(permits);
@@ -43,35 +43,37 @@ const AnalyticsPage = () => {
     };
   }, []);
 
-  // Process data for Bar chart
+  // Process data for Bar chart (Vehicle Types)
   const vehicleTypes = {};
   permitsData.forEach(permit => {
     const { vehicleType } = permit;
     vehicleTypes[vehicleType] = (vehicleTypes[vehicleType] || 0) + 1;
   });
 
+  const totalVehicleTypes = Object.values(vehicleTypes).reduce((acc, count) => acc + count, 0);
   const barChartData = {
     labels: Object.keys(vehicleTypes),
     datasets: [
       {
         label: 'Number of Permits by Vehicle Type',
-        data: Object.values(vehicleTypes),
+        data: Object.values(vehicleTypes).map(count => ((count / totalVehicleTypes) * 100).toFixed(2)), // Percentage
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
       },
     ],
   };
 
-  // Process data for Pie chart
+  // Process data for Pie chart (Permit Status Distribution)
   const statusCounts = { New: 0, Renewal: 0, Expired: 0 };
   permitsData.forEach(permit => {
     statusCounts[permit.status] = (statusCounts[permit.status] || 0) + 1;
   });
 
+  const totalStatuses = Object.values(statusCounts).reduce((acc, count) => acc + count, 0);
   const pieChartData = {
     labels: Object.keys(statusCounts),
     datasets: [
       {
-        data: Object.values(statusCounts),
+        data: Object.values(statusCounts).map(count => ((count / totalStatuses) * 100).toFixed(2)), // Percentage
         backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)'],
       },
     ],
@@ -92,11 +94,11 @@ const AnalyticsPage = () => {
       <p><strong>Total Reports Submitted:</strong> ${reportsCount}</p>
       <h3>Permits by Vehicle Type</h3>
       <ul>
-        ${Object.entries(vehicleTypes).map(([type, count]) => `<li>${type}: ${count}</li>`).join('')}
+        ${Object.entries(vehicleTypes).map(([type, count]) => `<li>${type}: ${count} (${((count / totalVehicleTypes) * 100).toFixed(2)}%)</li>`).join('')}
       </ul>
       <h3>Permit Status Distribution</h3>
       <ul>
-        ${Object.entries(statusCounts).map(([status, count]) => `<li>${status}: ${count}</li>`).join('')}
+        ${Object.entries(statusCounts).map(([status, count]) => `<li>${status}: ${count} (${((count / totalStatuses) * 100).toFixed(2)}%)</li>`).join('')}
       </ul>
     `;
 
@@ -152,7 +154,7 @@ const AnalyticsPage = () => {
         </Typography>
         <ul>
           {Object.entries(vehicleTypes).map(([type, count]) => (
-            <li key={type}>{type}: {count}</li>
+            <li key={type}>{type}: {count} ({((count / totalVehicleTypes) * 100).toFixed(2)}%)</li>
           ))}
         </ul>
         <Typography variant="body1">
@@ -160,7 +162,7 @@ const AnalyticsPage = () => {
         </Typography>
         <ul>
           {Object.entries(statusCounts).map(([status, count]) => (
-            <li key={status}>{status}: {count}</li>
+            <li key={status}>{status}: {count} ({((count / totalStatuses) * 100).toFixed(2)}%)</li>
           ))}
         </ul>
       </Paper>
