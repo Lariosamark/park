@@ -4,10 +4,12 @@ import { Chart, registerables } from 'chart.js';
 import { usePermit } from './usePermit'; // Adjust import according to your file structure
 import { Container, Grid, Paper, Typography, Button } from '@mui/material';
 import { db } from '../../lib/firebase'; // Adjust path as necessary
-import { collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 // Register the components
 Chart.register(...registerables);
+Chart.register(ChartDataLabels);
 
 const AnalyticsPage = () => {
   const [permitsData, setPermitsData] = useState([]);
@@ -34,7 +36,6 @@ const AnalyticsPage = () => {
       setViolationsData(snapshot.docs.map(doc => doc.data()));
     });
 
-    // Cleanup function to unsubscribe from snapshots
     return () => {
       unsubscribeReports();
       unsubscribePermits();
@@ -51,16 +52,6 @@ const AnalyticsPage = () => {
   });
 
   const totalVehicleTypes = Object.values(vehicleTypes).reduce((acc, count) => acc + count, 0);
-  const barChartData = {
-    labels: Object.keys(vehicleTypes),
-    datasets: [
-      {
-        label: 'Number of Permits by Vehicle Type',
-        data: Object.values(vehicleTypes).map(count => ((count / totalVehicleTypes) * 100).toFixed(2)), // Percentage
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-      },
-    ],
-  };
 
   // Process data for Pie chart (Permit Status Distribution)
   const statusCounts = { New: 0, Renewal: 0, Expired: 0 };
@@ -69,15 +60,6 @@ const AnalyticsPage = () => {
   });
 
   const totalStatuses = Object.values(statusCounts).reduce((acc, count) => acc + count, 0);
-  const pieChartData = {
-    labels: Object.keys(statusCounts),
-    datasets: [
-      {
-        data: Object.values(statusCounts).map(count => ((count / totalStatuses) * 100).toFixed(2)), // Percentage
-        backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)'],
-      },
-    ],
-  };
 
   // Summary data
   const totalPermits = permitsData.length;
@@ -146,23 +128,24 @@ const AnalyticsPage = () => {
         <Typography variant="body1">
           <strong>Total Reports Submitted:</strong> {reportsCount}
         </Typography>
-        <Typography variant="body1">
-          <strong>Total Vehicle Types:</strong> {Object.keys(vehicleTypes).length}
-        </Typography>
-        <Typography variant="body1">
+        <Typography variant="body1" gutterBottom>
           <strong>Permits by Vehicle Type:</strong>
         </Typography>
         <ul>
           {Object.entries(vehicleTypes).map(([type, count]) => (
-            <li key={type}>{type}: {count} ({((count / totalVehicleTypes) * 100).toFixed(2)}%)</li>
+            <li key={type}>
+              {type}: {count} ({((count / totalVehicleTypes) * 100).toFixed(2)}%)
+            </li>
           ))}
         </ul>
-        <Typography variant="body1">
+        <Typography variant="body1" gutterBottom>
           <strong>Permit Status Distribution:</strong>
         </Typography>
         <ul>
           {Object.entries(statusCounts).map(([status, count]) => (
-            <li key={status}>{status}: {count} ({((count / totalStatuses) * 100).toFixed(2)}%)</li>
+            <li key={status}>
+              {status}: {count} ({((count / totalStatuses) * 100).toFixed(2)}%)
+            </li>
           ))}
         </ul>
       </Paper>
@@ -171,13 +154,76 @@ const AnalyticsPage = () => {
         <Grid item xs={12} md={6}>
           <Paper elevation={3} style={{ padding: '16px' }}>
             <Typography variant="h6">Permits by Vehicle Type</Typography>
-            <Bar data={barChartData} />
+            <Bar
+              data={{
+                labels: Object.keys(vehicleTypes),
+                datasets: [
+                  {
+                    label: 'Percentage of Permits by Vehicle Type',
+                    data: Object.values(vehicleTypes).map(count => ((count / totalVehicleTypes) * 100).toFixed(2)),
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                  },
+                ],
+              }}
+              options={{
+                plugins: {
+                  datalabels: {
+                    display: true,
+                    color: 'black',
+                    formatter: (value) => `${value}%`, // Show percentage on bars
+                    font: {
+                      weight: 'bold',
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: (context) => `${context.raw}%`, // Show percentage on tooltip
+                    },
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: (value) => `${value}%`, // Show percentage on Y-axis ticks
+                    },
+                  },
+                },
+              }}
+            />
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
           <Paper elevation={3} style={{ padding: '16px' }}>
             <Typography variant="h6">Permit Status Distribution</Typography>
-            <Pie data={pieChartData} />
+            <Pie
+              data={{
+                labels: Object.keys(statusCounts),
+                datasets: [
+                  {
+                    data: Object.values(statusCounts).map(count => ((count / totalStatuses) * 100).toFixed(2)),
+                    backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)'],
+                  },
+                ],
+              }}
+              options={{
+                plugins: {
+                  datalabels: {
+                    display: true,
+                    color: 'white',
+                    formatter: (value) => `${value}%`, // Show percentage on Pie chart segments
+                    font: {
+                      weight: 'bold',
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: (context) => `${context.label}: ${context.raw}%`, // Show percentage on tooltip
+                    },
+                  },
+                },
+              }}
+            />
           </Paper>
         </Grid>
       </Grid>
